@@ -12,7 +12,10 @@ const server = Bun.serve({
       return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
     }
     try {
-      const pathname = decodeURIComponent(new URL(request.url).pathname);
+      let pathname = decodeURIComponent(new URL(request.url).pathname);
+      if (['/terms', '/privacy', '/terms/', '/privacy/'].includes(pathname)) {
+        pathname = pathname.replace(/\/$/, '') + '.html';
+      }
       if (pathname.includes('\0')) return new Response('Bad request', { status: 400 });
       const filename = path.resolve(root, '.' + (pathname.endsWith('/') ? pathname + 'index.html' : pathname));
       if (!filename.startsWith(root + path.sep)) return new Response('Forbidden', { status: 403 });

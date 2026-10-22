@@ -2,7 +2,7 @@
 
 AceCut 官网独立维护仓库：https://github.com/diifan/acecut-website
 
-纯 HTML / CSS / JavaScript，Bun 用于本地开发与构建。生产发布仅包含静态文件，不需要运行 Bun 服务。设计来自产品经理提供的 acecut-website.zip，保留原稿布局、图片、文案与交互。
+纯 HTML / CSS / JavaScript，Bun 用于本地开发与构建。生产发布仅包含静态文件，不需要运行 Bun 服务。设计来自产品经理提供的 acecut-website.zip，在原稿基础上适配移动端覆盖式首屏，补齐公司联系方式和法律页面。
 
 ## 本地开发
 
@@ -45,6 +45,8 @@ bun run preview
 
 - 正文及 SEO 元数据：`public/index.html`
 - 页面样式及响应式布局：`public/style.css`
+- 法律页面：`public/terms.html`、`public/privacy.html`、`public/legal.css`
+- 页脚矢量 Logo：`public/assets/acecut-wordmark-footer.svg`（复用 App 原有矢量素材）
 - Courtside 滚动交互：`public/reviews.js`
 - 图片：`public/assets/`
 - 域名 SEO：`public/robots.txt`、`public/sitemap.xml`
@@ -54,7 +56,7 @@ canonical、Open Graph URL、sitemap 已配置为 https://acecut.goswie.com/。
 
 ## 内容待更新
 
-原稿的 4 个下载入口目前指向 App Store 搜索结果，上架后统一替换成正式应用链接。字体使用 Google Fonts，离线会回退到系统字体。功能描述和产品示意图沿用原稿，正式发布前确认其符合发布版本，并接入需要的隐私政策及条款。
+原稿的 4 个下载入口目前指向 App Store 搜索结果，上架后统一替换成正式应用链接。字体使用 Google Fonts，离线会回退到系统字体。功能描述和产品示意图沿用原稿，正式发布前确认其符合发布版本，Terms 与 Privacy 已按 HoopCut 的结构适配 AceCut，入口位于页脚。
 
 ## 已完成验证
 
@@ -63,3 +65,5 @@ canonical、Open Graph URL、sitemap 已配置为 https://acecut.goswie.com/。
 - Chromium 通过 HTTP 检查 1440×1000、390×844、320×740：图片、字体加载正常，无横向溢出和页面 JavaScript 错误。
 - FAQ 展开、滚动暂停及减少动画偏好检查通过。
 - `validation/` 为本地验收截图，不提交到仓库或发布目录。
+
+2026-10-22 更新：移动端首屏文字叠加头图；页脚统一 SWINK AI INC. / hello@goswie.com；/terms 与 /privacy 通过 Vercel cleanUrls 和本地服务器匹配。三页均在 320、390、768、1440 像素宽度通过 HTTP、溢出及页脚链接检查。
