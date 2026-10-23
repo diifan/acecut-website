@@ -243,3 +243,8 @@ main,header,footer,section{max-width:100%;min-width:0}
   .hero-copy>p:not(.kicker){font-size:14px;margin-top:22px}
   .hero-download{left:20px;right:20px;bottom:30px}
 }
+
+/* Contrast and standalone target sizes, verified in mobile audits. */
+.section-top .kicker,.demo-note,.player-context,.review-motion-bar>span{color:#56624d}
+header .brand{display:flex;align-items:center;min-height:44px}
+header nav a{display:inline-flex;align-items:center;min-height:32px}
