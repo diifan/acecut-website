@@ -7,3 +7,10 @@ validation/
 .env
 .env.*
 !.env.example
+
+.runtime-cuda/
+__pycache__/
+validation/
+
+server/tracer/native/*.so
+server/tracer/native/*.ptx
