@@ -33,6 +33,7 @@ def receipt(day,**updates):
  if day=='2026-11-24':
   atomic(REPORT/'acecut-receipt.json',r)
   text=f"# AceCut 现有官网新增 SEO 页面\n\n状态：{r['state']}。目标 {r['target']}；生成 {r['generated_count']}；验证 {r['validated_count']}；发布 {r['published_count']}。\n\n词源：{json.dumps(r['keyword_sources'],ensure_ascii=False)}\n\n词池：{json.dumps(r['keyword_pool'],ensure_ascii=False)}\n\n阻塞/失败：{json.dumps(r['blockers'],ensure_ascii=False)}\n\n更新时间：{r['last_progress_at']}\n"
+  if r.get('implementation'):text+='\n## 执行器实现与验收\n\n'+json.dumps(r['implementation'],ensure_ascii=False,indent=2)+'\n'
   contract=WORK/'production/tracer-daily/INPUT-CONTRACT.md'
   if contract.exists():text+='\n'+contract.read_text()
   p=REPORT/'acecut-progress.md';t=p.with_suffix('.tmp');t.write_text(text);os.replace(t,p)
