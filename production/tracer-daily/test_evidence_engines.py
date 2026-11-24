@@ -49,3 +49,20 @@ class EvidenceEngines(unittest.TestCase):
   self.assertIn('2026-03-30',html);self.assertIn('percentage points',html);self.assertIn('not a live score',html);self.assertNotIn('winner',html)
 
 if __name__=='__main__':unittest.main()
+
+class PublicationStateTests(unittest.TestCase):
+ def test_refresh_preserves_prepared_and_published_receipts(self):
+  import executor
+  from unittest.mock import patch
+  for state in ('prepared','published'):
+   with patch.object(executor,'read',return_value={'state':state}),patch.object(executor,'ingest') as ingest:
+    self.assertEqual(executor.refresh('2099-01-01'),{'state':state});ingest.assert_not_called()
+ def test_transient_live_404_retries_but_auth_failure_does_not(self):
+  import executor,urllib.error
+  from unittest.mock import MagicMock,patch
+  opener=MagicMock();response=MagicMock();response.__enter__.return_value.read.return_value=b'expected'
+  opener.open.side_effect=[urllib.error.HTTPError('https://example.test',404,'Not yet propagated',{},None),response]
+  with patch.object(executor.time,'sleep'):
+   self.assertEqual(executor.live_bytes(opener,'https://example.test'),b'expected')
+  opener.open.side_effect=urllib.error.HTTPError('https://example.test',403,'Forbidden',{},None)
+  with self.assertRaises(urllib.error.HTTPError):executor.live_bytes(opener,'https://example.test')

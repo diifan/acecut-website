@@ -15,6 +15,8 @@ def _harvest(limit=12000,network_limit=80,home=None):
   if (u.hostname in ('www.tennis.com','tennis.com') and ('/players-rankings/' in u.path or '/matches/' in u.path)) or (u.hostname in ('www.tennisabstract.com','tennisabstract.com') and re.search(r'/[w]?player(?:-classic)?\.cgi$',u.path)):
    groups.setdefault(url,[]).append(row)
  selected=sorted(groups,key=lambda u:(-max(float(r['volume']) for r in groups[u]),u))[:limit]
+ prior=read(home/'tennis-records.json',{}).get('records',{})
+ selected=list(dict.fromkeys(selected+[r['source_url'] for r in prior.values() if r['source_url'] in groups]))
  network=set();locks=collections.defaultdict(lambda:threading.BoundedSemaphore(8))
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})

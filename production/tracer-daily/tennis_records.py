@@ -116,5 +116,5 @@ def registry():
  return _cache
 def for_row(row):
  data=registry();ident=data.get('keywords',{}).get(' '.join(row['keyword'].casefold().split()));record=data.get('records',{}).get(ident)
- if record and row['evidence_url']==record['source_url'] and aligned(row['keyword'],record):return record
- return next((r for r in _sources.get(row['evidence_url'],[]) if aligned(row['keyword'],r)),None)
+ if record and row.get('evidence_url','')==record['source_url'] and aligned(row['keyword'],record):return record
+ return next((r for r in _sources.get(row.get('evidence_url',''),[]) if aligned(row['keyword'],r)),None)

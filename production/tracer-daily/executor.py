@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Incremental AceCut publishing; shared controller owns UI and mutable config."""
-import argparse,datetime,json,re,sys,time,urllib.request,xml.etree.ElementTree as ET
+import argparse,datetime,json,re,sys,time,urllib.request,urllib.error,xml.etree.ElementTree as ET
 from common import *
 from keyword_input import db,counts,ingest,bind
 from source_cache import verify,intent_key
@@ -126,6 +126,15 @@ def prepare(day,collect=True):
  assert api('/v4/aliases/acecut.goswie.com')['deploymentId']==alias_before,'Production alias changed during preparation'
  return receipt(day,state='prepared',prepared_deployment_id=ident,deployment_url='https://'+d['url'],ready_for_promotion=True,blockers=[])
 
+def live_bytes(opener,url):
+ # Domain promotion can briefly return the previous deployment's cached 404.
+ for attempt in range(6):
+  try:
+   with opener.open(url,timeout=30) as response:return response.read()
+  except urllib.error.HTTPError as error:
+   if error.code not in (404,429,502,503,504) or attempt==5:raise
+   time.sleep(2*(attempt+1))
+
 def publish(day,immediate=False):
  if read(HOME/(day+'-receipt.json'),{}).get('source_kind')!='semrush_keywords':raise RuntimeError('Publication requires a verified Semrush keyword batch; video-title batches are prohibited')
  cfg=config();r=read(HOME/(day+'-receipt.json'),{});local=datetime.datetime.now(ZoneInfo(cfg['timezone']))
@@ -146,11 +155,11 @@ def publish(day,immediate=False):
  run([CLI,'promote',r['prepared_deployment_id'],'--yes','--scope',SCOPE,'--timeout','90s','--json'],timeout=120)
  alias=api('/v4/aliases/acecut.goswie.com');assert alias['deploymentId']==r['prepared_deployment_id']
  opener=urllib.request.build_opener(urllib.request.ProxyHandler({'https':PROXY}))
- with opener.open(ORIGIN+'/sitemap.xml',timeout=30) as response:sitemap=response.read()
+ sitemap=live_bytes(opener,ORIGIN+'/sitemap.xml')
  urls={x.text for x in ET.fromstring(sitemap).findall('{*}url/{*}loc')};expected={p['url'] for p in m['pages']};assert expected<=urls,'Live sitemap missing batch URLs'
  sample=[]
  for p in (m['pages'][0],m['pages'][len(m['pages'])//2],m['pages'][-1]):
-  with opener.open(p['url'],timeout=30) as response:body=response.read()
+  body=live_bytes(opener,p['url'])
   assert hashlib.sha256(body).hexdigest()==p['sha256'],'Live page differs from validated page';sample.append(p['url'])
  c=db()
  with c:c.execute('update keywords set status="published" where day=? and status="reserved"',(day,))

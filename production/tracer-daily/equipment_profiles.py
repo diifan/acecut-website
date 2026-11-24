@@ -110,8 +110,8 @@ def registry():
 def for_row(row):
  data=registry();key=data.get('keywords',{}).get(' '.join(row['keyword'].casefold().split()))
  value=data.get('profiles',{}).get(key)
- if value and value['source_url']==row['evidence_url'] and aligned(row['keyword'],value):return value
- return next((p for p in _sources.get(row['evidence_url'],[]) if aligned(row['keyword'],p)),None)
+ if value and value['source_url']==row.get('evidence_url','') and aligned(row['keyword'],value):return value
+ return next((p for p in _sources.get(row.get('evidence_url',''),[]) if aligned(row['keyword'],p)),None)
 def grounded(profile,data):
  if data.get('body_sha256')!=profile['source_sha256']:return False
  if 'table_index' in profile:

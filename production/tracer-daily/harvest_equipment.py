@@ -20,6 +20,8 @@ def harvest(limit=2000,network_limit=40,home=None):
   groups.setdefault(url,[]).append(row)
  # Existing successful structured sources cost no network request; failures remain visible.
  selected=sorted(groups,key=lambda u:(-len(groups[u]),u))[:limit]
+ prior=read(home/'equipment-profiles.json',{}).get('profiles',{})
+ selected=list(dict.fromkeys(selected+[r['source_url'] for r in prior.values() if r['source_url'] in groups]))
  profiles={};words={};receipts=[];started=now();network=set()
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
