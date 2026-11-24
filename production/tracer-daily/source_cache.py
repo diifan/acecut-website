@@ -43,7 +43,7 @@ def fetch(url):
  except Exception as e:data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
  atomic(path,data);return path,data
 EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)
-FAMILIES=[('recording',r'\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\b'),('serve',r'\b(?:serves?|serving|aces?|toss)\b'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]
+FAMILIES=[('drop_shot',r'\bdrop shots?\b'),('lob',r'\b(?:lobs?|lobbing)\b'),('overhead',r'\boverhead(?: smash)?\b'),('recording',r'\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\b'),('serve',r'\b(?:serves?|serving|aces?|toss)\b'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]
 STOP={'how','to','a','an','the','in','on','for','of','and','with','best','tennis','is','what','at','your','my','do','i'}
 def classify(row,data):
  word=row['keyword']

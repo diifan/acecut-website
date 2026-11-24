@@ -85,4 +85,6 @@ def ingest():
 
 def counts():
  c=db();states={r[0]:r[1] for r in c.execute('select status,count(*) from keywords group by status')}
- return dict(path=str(HOME/'keyword-pool.sqlite'),source_kind='semrush_keywords',status_counts=states,candidate_count=sum(states.values()),fetch_pending_count=states.get('candidate',0)+states.get('fetch_failed',0),verified_available=states.get('verified',0),filters={'kd_lt':30,'volume_gt':100})
+ reasons={r[0]:r[1] for r in c.execute('select error,count(*) from keywords where error is not null group by error')}
+ funnel={'imported_keywords':sum(states.values()),'intent_rejected':sum(reasons.get(k,0) for k in ('unrelated_search_intent','no_supported_tracer_workflow_intent')),'source_fetch_pending':states.get('fetch_failed',0),'source_or_context_rejected':sum(reasons.get(k,0) for k in ('source_keyword_identity_not_aligned','source_not_tennis_or_insufficient_text','source_context_inadequate')),'consolidated_source_candidates':reasons.get('duplicate_source_intent',0),'unique_available_pages':states.get('verified',0)}
+ return dict(funnel=funnel,path=str(HOME/'keyword-pool.sqlite'),source_kind='semrush_keywords',status_counts=states,candidate_count=sum(states.values()),fetch_pending_count=states.get('candidate',0)+states.get('fetch_failed',0),verified_available=states.get('verified',0),filters={'kd_lt':30,'volume_gt':100})

@@ -42,6 +42,15 @@ class InputBoundary(unittest.TestCase):
   for keyword in ['alexandra eala faces zheng qinwen', 'yulia putintseva dance video', 'djokovic tennis record']:
    family,_=sc.classify({'keyword':keyword,'evidence_url':'https://example.com/tennis'}, {})
    self.assertIsNone(family)
+ def test_new_shot_families_require_evidence_and_have_workflows(self):
+  from content_engine import WORKFLOWS
+  for word,family in [('drop shot tennis','drop_shot'),('lobbing tennis','lob'),('tennis overhead smash','overhead')]:
+   row={'keyword':word,'evidence_url':'https://example.com/'+word.replace(' ','-')}
+   self.assertEqual(sc.classify(row,{})[1],'source_fetch_pending')
+   data={'http':200,'title':word,'text':('For '+word+', keep the tennis ball visible throughout preparation, contact and recovery. ')*6}
+   self.assertEqual(sc.classify(row,data),(family,None));self.assertIn(family,WORKFLOWS)
+  for word in ['lobster elite','global television','emon van loben sels']:
+   self.assertEqual(sc.classify({'keyword':word}, {})[1],'no_supported_tracer_workflow_intent')
  def test_other_sport_and_bad_intent(self):
   r={'keyword':'basketball serve','evidence_url':'https://example.com/tennis'};self.assertEqual(sc.classify(r,{'http':200})[1],'unrelated_search_intent')
  def test_empty_pool_does_not_build_or_publish(self):
