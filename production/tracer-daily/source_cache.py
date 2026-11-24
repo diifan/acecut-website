@@ -49,6 +49,9 @@ _http=threading.local()
 
 def fetch(url,structured=False):
  path=HOME/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json');old=read(path)
+ if old and old.get('http')!=200 and old.get('checked_at'):
+  import datetime
+  if (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['checked_at'])).total_seconds()<1800:return path,old
  if old and old.get('http')==200 and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
  for proxy in dict.fromkeys([PROXY,'http://192.168.0.110:10808']):
   try:

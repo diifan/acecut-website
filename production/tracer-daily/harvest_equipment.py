@@ -8,7 +8,7 @@ from source_cache import fetch
 from evidence_selection import candidate_rows
 from equipment_profiles import extract,aligned
 
-def harvest(limit=2000,network_limit=40,home=None):
+def harvest(limit=2000,network_limit=200,home=None):
  home=Path(home or HOME)
  binding=read(home/'keyword-input.json');rows=candidate_rows(home)
  groups={}
@@ -25,6 +25,7 @@ def harvest(limit=2000,network_limit=40,home=None):
  profiles={};words={};receipts=[];started=now();network=set()
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
+  if cached.get('checked_at') and cached.get('http')!=200 and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
   need_tables=bool(re.search(r'tenniscompanion.org/gear/racquets/[^/]+/$',url))
   if not (cached.get('http')==200 and cached.get('sections') and (not need_tables or 'tables' in cached)) and len(network)<network_limit:network.add(url)
  def load(url):
@@ -63,7 +64,7 @@ def ensure_profiles(home=None):
  if not binding:return
  digest=hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest()
  age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['created_at'])).total_seconds() if old.get('created_at') else float('inf')
- if old.get('pool_sha256')!=digest or age>21600:harvest(network_limit=40,home=home)
+ if old.get('pool_sha256')!=digest or age>21600 or (age>300 and any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[]))):harvest(network_limit=200,home=home)
 
 if __name__=='__main__':
- parser=argparse.ArgumentParser();parser.add_argument('--limit',type=int,default=2000);parser.add_argument('--network-limit',type=int,default=40);args=parser.parse_args();harvest(args.limit,args.network_limit)
+ parser=argparse.ArgumentParser();parser.add_argument('--limit',type=int,default=2000);parser.add_argument('--network-limit',type=int,default=200);args=parser.parse_args();harvest(args.limit,args.network_limit)

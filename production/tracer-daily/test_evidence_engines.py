@@ -66,3 +66,13 @@ class PublicationStateTests(unittest.TestCase):
    self.assertEqual(executor.live_bytes(opener,'https://example.test'),b'expected')
   opener.open.side_effect=urllib.error.HTTPError('https://example.test',403,'Forbidden',{},None)
   with self.assertRaises(urllib.error.HTTPError):executor.live_bytes(opener,'https://example.test')
+
+class EvidenceCooldownTests(unittest.TestCase):
+ def test_recent_source_failure_does_not_repeat_network_request(self):
+  import source_cache
+  from unittest.mock import patch
+  from common import now
+  old={'http':None,'error':'source timeout','checked_at':now()}
+  with patch.object(source_cache,'read',return_value=old),patch.object(source_cache,'public_url') as network_guard:
+   path,data=source_cache.fetch('https://example.test/source','entity')
+   self.assertEqual(data,old);network_guard.assert_not_called()

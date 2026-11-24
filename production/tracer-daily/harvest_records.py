@@ -7,7 +7,7 @@ from source_cache import fetch
 from evidence_selection import candidate_rows
 from tennis_records import extract,aligned
 
-def _harvest(limit=12000,network_limit=80,home=None):
+def _harvest(limit=12000,network_limit=500,home=None):
  home=Path(home or HOME);binding=read(home/'keyword-input.json');pool=Path(binding['pool_path']);rows=candidate_rows(home);groups={}
  for row in rows:
   row={**row,'keyword':row.get('keyword',row.get('Keyword','')),'evidence_url':row.get('evidence_url',row.get('URL','')),'volume':row.get('volume',row.get('Search Volume','0'))}
@@ -20,6 +20,7 @@ def _harvest(limit=12000,network_limit=80,home=None):
  network=set();locks=collections.defaultdict(lambda:threading.BoundedSemaphore(8))
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
+  if cached.get('checked_at') and cached.get('http')!=200 and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
   if not (cached.get('http')==200 and 'player_fields' in cached and 'tables' in cached) and len(network)<network_limit:network.add(url)
  def load(url):
   if url in network:
@@ -48,7 +49,7 @@ def _harvest(limit=12000,network_limit=80,home=None):
  atomic(home/'tennis-records.json',data)
  print(json.dumps({'finished':True,'records':len(records),'matched_keywords':len(words),'kinds':dict(collections.Counter(r['kind'] for r in records.values()))}),flush=True);return data
 
-def harvest(limit=12000,network_limit=80,home=None):
+def harvest(limit=12000,network_limit=500,home=None):
  home=Path(home or HOME)
  with (home/'records-harvest.lock').open('a') as lock:
   try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -66,7 +67,7 @@ def ensure_records(home=None):
  if not binding:return
  old=read(home/'tennis-records.json',{});digest=hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest()
  age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['created_at'])).total_seconds() if old.get('created_at') else float('inf')
- if old.get('pool_sha256')!=digest or age>21600:harvest(network_limit=80,home=home)
+ if old.get('pool_sha256')!=digest or age>21600 or (age>300 and any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[]))):harvest(network_limit=500,home=home)
 
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('--limit',type=int,default=12000);p.add_argument('--network-limit',type=int,default=80);a=p.parse_args();harvest(a.limit,a.network_limit)
+ p=argparse.ArgumentParser();p.add_argument('--limit',type=int,default=12000);p.add_argument('--network-limit',type=int,default=500);a=p.parse_args();harvest(a.limit,a.network_limit)
