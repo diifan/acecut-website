@@ -2,6 +2,7 @@
 import html,hashlib,json,re,urllib.parse
 from common import *
 from source_cache import classify
+from editorial_topics import TOPICS
 E=html.escape
 WORKFLOWS={
  'drop_shot':('Review a drop-shot sequence',['Keep the approach, racket contact and first bounce in one continuous shot.','Use court lines to describe the visible landing area; do not infer distance from a screen-space trail.','Keep the opponent in frame when comparing their starting position and response.','Review the plain replay before adding a short trail; stop the overlay when the ball becomes hidden.']),
@@ -31,6 +32,7 @@ def shell(title,description,path,body):
 def render(row,related):
  evidence=read(Path(row['evidence_path']));family,error=classify(row,evidence)
  if not family:raise ValueError('Source relevance failed: '+str(error))
+ if family.startswith('editorial:'):return render_editorial(row,evidence,TOPICS[family.split(':',1)[1]],related)
  quote=excerpt(row,evidence);heading,steps=WORKFLOWS[family];path='/tennis-tracer/'+slug(row);host=urllib.parse.urlsplit(row['evidence_url']).hostname
  body=f'<nav><a href="/tennis-ball-tracer">Tennis ball tracer</a> / <a href="/tennis-tracer">Review guides</a></nav><h1>{E(row["keyword"])}</h1><p class="guide-intro">A source-led tennis video review workflow for {E(row["keyword"])}.</p><section><h2>Start with the tennis context</h2><p>Read the <a href="{E(row["evidence_url"],quote=True)}">topic reference from {E(host)}</a> alongside your own recording. The source was checked on {E(evidence["checked_at"][:10])}. This short excerpt identifies the context for the review:</p><blockquote>{E(quote)}…</blockquote><p>The workflow below focuses on what you can observe in footage you own or have permission to edit. It does not claim that AceCut has analysed the source page or any player mentioned there.</p></section><section><h2>{heading}</h2><ol>'+''.join('<li>'+E(x)+'</li>' for x in steps)+'</ol></section>'
  body+=f'''<section class="clip-plan" data-key="{E(slug(row))}"><h2>Make your clip plan</h2><p>Use this worksheet to state what you will look for before uploading a segment. It stays in your browser; it does not upload footage.</p><form id="clip-plan"><label>What do you want to observe?<textarea id="observation" required maxlength="500" placeholder="Describe one visible moment you want to review."></textarea></label><label>Start time (mm:ss)<input id="start" required pattern="[0-9]+:[0-5][0-9]" value="0:00"></label><label>Segment length in seconds<input id="duration" type="number" min="1" max="30" value="10" required></label><label><input id="visible" type="checkbox"> The ball is visible throughout this segment</label><label><input id="continuous" type="checkbox"> This segment uses one continuous camera angle</label><button type="submit">Save clip plan</button><button type="button" id="download-plan">Download plan</button><p id="plan-status" role="status"></p></form></section><section><h2>Apply a trail, then check it</h2><p>Upload your own video to <a href="/try-tracer">AceCut’s online tennis Tracer</a> and choose a segment of up to 30 seconds. Select one of the 25 available visual styles. Processing may take several minutes; blurred, hidden or very small balls can produce missed or inaccurate detections.</p><p>Play the result at normal speed. The trail should follow visible ball points. If it jumps, bridges a camera cut or obscures the shot, shorten the segment or keep the plain clip. A trail is an editing effect, not a measured spin rate, ball speed or official line call.</p><p><a href="/try-tracer">Try the existing tennis Tracer</a> · <a href="/how-to-record-tennis-matches">Record clearer source footage</a> · <a href="/privacy">Upload privacy</a></p></section><section><h2>Related review workflows</h2><ul>'''
@@ -44,3 +46,14 @@ def hubs(rows):
   body+=''.join(f'<li><a href="/tennis-tracer/{slug(r)}">{E(r["keyword"])}</a></li>' for r in rows[i:i+100])+'</ul><nav>'
   body+=' '.join('<a href="'+('/tennis-tracer' if j==0 else f'/tennis-tracer/guides-{j+1}')+f'">{j+1}</a>' for j in range((len(rows)+99)//100))+'</nav>'
   p=WORK/'public'/(path[1:]+'.html');p.parent.mkdir(parents=True,exist_ok=True);p.write_text(shell('Tennis video review guides'+('' if n==0 else f' — page {n+1}'),f'Source-led tennis Tracer review workflows, page {n+1}.',path,body))
+
+
+def render_editorial(row,evidence,spec,related):
+ path='/tennis-tracer/'+slug(row)
+ body='<nav><a href="/tennis-tracer">Tennis guides</a></nav><article data-page-type="'+E(spec['kind'])+'"><h1>'+E(spec['title'])+'</h1><p class="guide-intro">'+E(spec['answer'])+'</p>'
+ for heading,paragraph in spec['sections']:body+='<section><h2>'+E(heading)+'</h2><p>'+E(paragraph)+'</p></section>'
+ body+='<section><h2>Use this checklist</h2><ul>'+''.join('<li>'+E(x)+'</li>' for x in spec['checklist'])+'</ul></section>'
+ body+='<section><h2>Sources and scope</h2><p><a href="'+E(row['evidence_url'],quote=True)+'">Read the topic reference</a>, checked '+E(evidence['checked_at'][:10])+'.</p>'
+ if spec.get('authority'):body+='<p><a href="'+spec['authority']+'">2026 ITF Rules of Tennis</a>. Confirm the format used by your event.</p>'
+ body+='</section><section><h2>Keep useful moments from your own session</h2><p>If you record your session, retain the original clip and use clear notes to identify what happened. <a href="/try-tracer">AceCut’s optional ball-trail tool</a> is for editing visible ball flight; it does not verify rules, court dimensions or technique.</p></section></article>'
+ return shell(spec['title'],spec['answer'][:155],path,body)

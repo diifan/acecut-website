@@ -50,9 +50,32 @@ class InputBoundary(unittest.TestCase):
    data={'http':200,'title':word,'text':('For '+word+', keep the tennis ball visible throughout preparation, contact and recovery. ')*6}
    self.assertEqual(sc.classify(row,data),(family,None));self.assertIn(family,WORKFLOWS)
   for word in ['lobster elite','global television','emon van loben sels']:
-   self.assertEqual(sc.classify({'keyword':word}, {})[1],'no_supported_tracer_workflow_intent')
+   self.assertEqual(sc.classify({'keyword':word}, {})[1],'needs_review')
+ def test_opposing_stroke_does_not_pass_token_overlap(self):
+  for word,title,url in [('djokovic backhand slow motion','Novak Djokovic Serve in Slow Motion','https://example.test/djokovic-serve-slow-motion'),('eastern backhand grip','Eastern Forehand Grip','https://example.test/eastern-forehand-grip')]:
+   data={'http':200,'title':title,'text':('This tennis source discusses '+word+' alongside many other tennis topics. ')*10}
+   self.assertEqual(sc.classify({'keyword':word,'evidence_url':url},data)[1],'source_keyword_identity_not_aligned')
+ def test_editorial_topics_use_intent_not_source_url(self):
+  rows=[{'keyword':'tennis court dimensions','evidence_url':'https://example.test/court'},{'keyword':'tennis court width','evidence_url':'https://example.test/court'},{'keyword':'tennis net height','evidence_url':'https://example.test/court'}]
+  self.assertEqual(sc.intent_key(rows[0]),sc.intent_key(rows[1]))
+  self.assertNotEqual(sc.intent_key(rows[0]),sc.intent_key(rows[2]))
+  for row in rows:
+   self.assertEqual(sc.classify(row,{})[1],'source_fetch_pending')
+   self.assertEqual(sc.classify(row,{'http':200,'text':'Tennis unrelated story. '*30})[1],'source_topic_answer_not_supported')
+  text='Tennis court dimensions are 78 feet long and the net centre is 3 feet high. '*10
+  self.assertEqual(sc.classify(rows[0],{'http':200,'text':text})[0],'editorial:court_dimensions')
+  self.assertEqual(sc.classify(rows[2],{'http':200,'text':text})[0],'editorial:net_height')
+ def test_editorial_renderer_answers_without_clip_plan(self):
+  import content_engine as ce
+  from editorial_topics import TOPICS
+  row={'keyword':'tennis court dimensions','evidence_url':'https://example.test/court'}
+  with patch.object(ce,'shell',side_effect=lambda title,description,path,body:body):html=ce.render_editorial(row,{'checked_at':'2026-11-24'},TOPICS['court_dimensions'],[])
+  self.assertIn('23.77',html);self.assertIn('data-page-type="court_reference"',html);self.assertNotIn('id="clip-plan"',html)
+ def test_new_unknown_and_equipment_are_not_discarded(self):
+  self.assertEqual(sc.classify({'keyword':'unknown tennis phrase','evidence_url':'https://example.test/'},{})[1],'needs_review')
+  self.assertEqual(sc.classify({'keyword':'tennis string tension','evidence_url':'https://example.test/'},{})[1],'needs_template')
  def test_other_sport_and_bad_intent(self):
-  r={'keyword':'basketball serve','evidence_url':'https://example.com/tennis'};self.assertEqual(sc.classify(r,{'http':200})[1],'unrelated_search_intent')
+  r={'keyword':'basketball serve','evidence_url':'https://example.com/tennis'};self.assertEqual(sc.classify(r,{'http':200})[1],'needs_review')
  def test_empty_pool_does_not_build_or_publish(self):
   k.bind(self.pool,self.manifest)
   with patch.object(executor,'git',side_effect=AssertionError('Git must not run')),patch.object(executor,'api',side_effect=AssertionError('Vercel must not run')),patch.object(executor,'run',side_effect=AssertionError('Build must not run')):

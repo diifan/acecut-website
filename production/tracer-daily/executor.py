@@ -28,7 +28,7 @@ def validate(rows,base):
  for row in rows:
   path='/tennis-tracer/'+slug(row);p=WORK/'public'/(path[1:]+'.html');text=p.read_text();title=re.search(r'<title>(.*?)</title>',text)[1]
   assert title not in titles,'Duplicate title';titles.add(title)
-  assert row['evidence_url'].replace('&','&amp;') in text and '/try-tracer' in text and 'id="clip-plan"' in text,'Missing source/utility'
+  assert row['evidence_url'].replace('&','&amp;') in text and '/try-tracer' in text and ('id="clip-plan"' in text or 'data-page-type=' in text),'Missing source/utility'
   assert text.count('rel="canonical"')==1 and f'href="{ORIGIN}{path}"' in text
   assert sha(p) not in bodies,'Duplicate body';bodies.add(sha(p));urls.add(ORIGIN+path)
   evidence=Path(row['evidence_path']);assert read(evidence)['http']==200
