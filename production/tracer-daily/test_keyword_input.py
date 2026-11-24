@@ -29,6 +29,19 @@ class InputBoundary(unittest.TestCase):
   with self.assertRaises(ValueError):k.ingest()
  def test_unproven_metrics_rejected(self):
   self.rows=[self.row()];self.write();k.bind(self.pool,self.manifest);self.pool.write_text(self.pool.read_text().replace('101','102'));self.assertEqual(k.ingest()['unproven'],1)
+ def test_three_letter_tennis_context_excerpt(self):
+  from content_engine import excerpt
+  source='An ace is a serve that lands legally and is not touched by the receiver.'
+  value=excerpt({'keyword':'what is an ace in tennis'},{'text':source})
+  self.assertIn('ace',value);self.assertLessEqual(len(value.split()),24)
+ def test_context_rejects_navigation_and_prices(self):
+  from evidence_text import context_excerpt
+  for text in ['Tennis serve basics | Home | Twitter | Menu | More tennis serve tips', 'BEST SELLER tennis serve sensors $249.99 with free shipping on all orders.']:
+   with self.assertRaises(ValueError):context_excerpt('tennis serve',text)
+ def test_player_news_is_not_a_serve_workflow(self):
+  for keyword in ['alexandra eala faces zheng qinwen', 'yulia putintseva dance video', 'djokovic tennis record']:
+   family,_=sc.classify({'keyword':keyword,'evidence_url':'https://example.com/tennis'}, {})
+   self.assertIsNone(family)
  def test_other_sport_and_bad_intent(self):
   r={'keyword':'basketball serve','evidence_url':'https://example.com/tennis'};self.assertEqual(sc.classify(r,{'http':200})[1],'unrelated_search_intent')
  def test_empty_pool_does_not_build_or_publish(self):

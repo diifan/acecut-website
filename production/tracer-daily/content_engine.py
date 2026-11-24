@@ -16,13 +16,8 @@ WORKFLOWS={
 
 def slug(row):return re.sub('[^a-z0-9]+','-',row['keyword'].lower()).strip('-')[:110].rstrip('-')
 def excerpt(row,evidence):
- tokens=set(re.findall('[a-z]{4,}',row['keyword'].lower()))-{'tennis','with','what','best','that','your'}
- sentences=re.split(r'(?<=[.!?])\s+',evidence['text'])
- scored=sorted(sentences,key=lambda s:sum(t in s.lower() for t in tokens),reverse=True)
- for s in scored:
-  words=s.split()
-  if len(words)>=8 and any(t in s.lower() for t in tokens):return ' '.join(words[:24])
- raise ValueError('No source-specific evidence excerpt')
+ from evidence_text import context_excerpt
+ return context_excerpt(row['keyword'],evidence['text'])
 
 def shell(title,description,path,body):
  original=(WORK/'public/tennis-ball-tracer.html').read_text();header=re.search(r'<header>.*?</header>',original,re.S)[0].replace('src="assets/','src="/assets/');footer=re.search(r'<footer\b.*?</footer>',original,re.S)[0].replace('src="assets/','src="/assets/')

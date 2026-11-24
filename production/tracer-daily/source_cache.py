@@ -42,8 +42,8 @@ def fetch(url):
   data=dict(source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now())
  except Exception as e:data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
  atomic(path,data);return path,data
-EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)
-FAMILIES=[('recording',r'camera|record|filming|video|highlight|editing|tracer|ball track'),('serve',r'\bserve|serving|aces?\b|toss'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]
+EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)
+FAMILIES=[('recording',r'\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\b'),('serve',r'\b(?:serves?|serving|aces?|toss)\b'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]
 STOP={'how','to','a','an','the','in','on','for','of','and','with','best','tennis','is','what','at','your','my','do','i'}
 def classify(row,data):
  word=row['keyword']
@@ -56,10 +56,22 @@ def classify(row,data):
  tokens=set(re.findall(r'[a-z0-9]+',norm(word)))-STOP
  matches=sum(t in identity for t in tokens)
  if not tokens or matches/max(1,len(tokens))<.65:return None,'source_keyword_identity_not_aligned'
+ from evidence_text import context_excerpt
+ try:context_excerpt(word,data.get('text',''))
+ except ValueError:return None,'source_context_inadequate'
  return family,None
 
 def verify(day):
  c=db();rows=[dict(r) for r in c.execute('select * from keywords where status in ("candidate","fetch_failed")')]
+ # Apply the existing keyword-only exclusions before spending source fetches.
+ # This does not relax evidence gates for any potentially usable topic.
+ wanted=[]
+ for row in rows:
+  _,error=classify(row,{})
+  if error in ('unrelated_search_intent','no_supported_tracer_workflow_intent'):
+   c.execute('update keywords set status="excluded",error=? where normalized=?',(error,row['normalized']))
+  else:wanted.append(row)
+ c.commit();rows=wanted
  urls=list(dict.fromkeys(r['evidence_url'] for r in rows));lookup={};receipt(day,state='fetching_keyword_evidence',keyword_pool=counts())
  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
   futures={pool.submit(fetch,u):u for u in urls}
