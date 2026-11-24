@@ -1,0 +1,9 @@
+[Unit]
+Description=Check AceCut configured SEO schedule each minute
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Persistent=true
+Unit=swie-acecut-tracer-daily.service
+[Install]
+WantedBy=timers.target

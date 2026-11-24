@@ -1,0 +1,14 @@
+[Unit]
+Description=AceCut incremental tennis SEO prepare/publish executor
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=swi-codex
+Group=swi-codex
+WorkingDirectory=/data/swi-algo/Swi-App-Factory/Acecut/website-seo-daily
+ExecStart=/usr/bin/python3 /data/swi-algo/Swi-App-Factory/Acecut/website-seo-daily/production/tracer-daily/executor.py tick
+TimeoutStartSec=7200
+UMask=0027
+[Install]
+WantedBy=multi-user.target
