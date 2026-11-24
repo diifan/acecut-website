@@ -32,6 +32,12 @@ def shell(title,description,path,body):
 def render(row,related):
  evidence=read(Path(row['evidence_path']));family,error=classify(row,evidence)
  if not family:raise ValueError('Source relevance failed: '+str(error))
+ if family.startswith('record:'):
+  from tennis_records import for_row as record_for_row
+  return render_record(row,record_for_row(row))
+ if family.startswith('equipment:'):
+  from equipment_profiles import for_row
+  return render_equipment(row,evidence,for_row(row))
  if family.startswith('editorial:'):return render_editorial(row,evidence,TOPICS[family.split(':',1)[1]],related)
  quote=excerpt(row,evidence);heading,steps=WORKFLOWS[family];path='/tennis-tracer/'+slug(row);host=urllib.parse.urlsplit(row['evidence_url']).hostname
  body=f'<nav><a href="/tennis-ball-tracer">Tennis ball tracer</a> / <a href="/tennis-tracer">Review guides</a></nav><h1>{E(row["keyword"])}</h1><p class="guide-intro">A source-led tennis video review workflow for {E(row["keyword"])}.</p><section><h2>Start with the tennis context</h2><p>Read the <a href="{E(row["evidence_url"],quote=True)}">topic reference from {E(host)}</a> alongside your own recording. The source was checked on {E(evidence["checked_at"][:10])}. This short excerpt identifies the context for the review:</p><blockquote>{E(quote)}…</blockquote><p>The workflow below focuses on what you can observe in footage you own or have permission to edit. It does not claim that AceCut has analysed the source page or any player mentioned there.</p></section><section><h2>{heading}</h2><ol>'+''.join('<li>'+E(x)+'</li>' for x in steps)+'</ol></section>'
@@ -57,3 +63,50 @@ def render_editorial(row,evidence,spec,related):
  if spec.get('authority'):body+='<p><a href="'+spec['authority']+'">2026 ITF Rules of Tennis</a>. Confirm the format used by your event.</p>'
  body+='</section><section><h2>Keep useful moments from your own session</h2><p>If you record your session, retain the original clip and use clear notes to identify what happened. <a href="/try-tracer">AceCut’s optional ball-trail tool</a> is for editing visible ball flight; it does not verify rules, court dimensions or technique.</p></section></article>'
  return shell(spec['title'],spec['answer'][:155],path,body)
+
+
+FIELD_NOTES={
+ 'head_size':'The area of the racket head. Keep square-inch and square-centimetre figures separate from linear measurements.',
+ 'length':'Overall racket length. Compare the same unit and confirm whether you are looking at a standard or extended variant.',
+ 'strung_weight':'Mass with strings installed in the cited specification. This is not interchangeable with an unstrung figure.',
+ 'unstrung_weight':'Mass before strings are installed in the cited specification. Added strings, grips and accessories change the playing setup.',
+ 'listed_weight':'Weight exactly as labelled by the reference. If the strung or unstrung condition is omitted, verify it before comparing this value with another racket.',
+ 'swingweight':'A rotational measurement reported by the source. It is a different property from static mass; keep the measurement method consistent when comparing.',
+ 'stiffness':'A stiffness rating as reported by this source, not an AceCut test result or a medical comfort claim.',
+ 'string_pattern':'The count of main and cross strings. Confirm that it belongs to this exact model variant.',
+ 'beam_width':'The reported beam thickness. Multiple values describe different positions rather than separate models.'}
+
+def render_equipment(row,evidence,profile):
+ name=profile['name'];path='/tennis-tracer/'+slug(row)
+ body='<nav><a href="/tennis-tracer">Tennis guides</a></nav><article data-page-type="equipment_profile"><h1>'+E(name)+' specifications</h1><p class="guide-intro">Compare the reported specifications for '+E(name)+'. The values below come from the cited reference, checked on '+E(profile['checked_at'][:10])+'. They are attributed source data, not measurements or a playtest by AceCut.</p>'
+ body+='<section><h2>Reported specification table</h2><table style="width:100%;table-layout:fixed;overflow-wrap:anywhere"><thead><tr><th scope="col">Property</th><th scope="col">Source value</th></tr></thead><tbody>'
+ for key,fact in profile['facts'].items():body+='<tr><th scope="row">'+E(fact['label'])+'</th><td>'+E(fact['value'])+'</td></tr>'
+ body+='</tbody></table></section><section><h2>Read these figures consistently</h2>'
+ for key,fact in profile['facts'].items():body+='<details><summary>'+E(fact['label'])+': '+E(fact['value'])+'</summary><p>'+E(FIELD_NOTES[key])+'</p></details>'
+ body+='</section><section><h2>Before comparing another racket</h2><ol><li>Match the model name, variant and any edition year shown in the source. Similar names can have different specifications.</li><li>Match the measurement condition. Do not compare a strung weight with an unstrung weight or treat swingweight as static weight.</li><li>Record your own setup separately, including strings and added accessories. A listed specification is not a measurement of your individual racket.</li></ol></section>'
+ body+='<section><h2>Source and limitations</h2><p><a href="'+E(profile['source_url'],quote=True)+'">Read the specification reference for '+E(name)+'</a>. Where the reference omits a property, this page leaves it out. Prices, stock, manufacturer changes and subjective review ratings are not inferred from the table.</p><p>If you record a trial session, retain consistent camera views and notes. <a href="/try-tracer">AceCut’s optional video editing tool</a> does not measure racket specifications, shot speed or spin.</p></section></article>'
+ return shell(name+' specifications', 'Source-attributed specifications for '+name+', with measurement conditions and a comparison checklist.',path,body)
+
+
+def render_record(row,record):
+ name=record['name'];path='/tennis-tracer/'+slug(row);kind=record['kind']
+ is_match=kind=='match_record';title=name+(' — '+record['match_date']+' match statistics' if is_match else ' — tennis profile and ranking snapshot')
+ body='<nav><a href="/tennis-tracer">Tennis reference guides</a></nav><article data-page-type="'+kind+'"><h1>'+E(title)+'</h1>'
+ if is_match:
+  body+='<p class="guide-intro">Historical statistics for '+E(name)+' on '+E(record['match_date'])+'. '+E(record['event'])+'. The source marks this match completed. This is a dated match record, not a live score or a prediction.</p>'
+  body+='<section><h2>Reported match statistics</h2><div style="overflow-x:auto"><table style="width:100%;table-layout:fixed;overflow-wrap:anywhere"><thead><tr><th scope="col">Statistic</th><th scope="col">'+E(record['players'][0])+'</th><th scope="col">'+E(record['players'][1])+'</th></tr></thead><tbody>'
+  for fact in record['facts']:body+='<tr><th scope="row">'+E(fact['label'])+'</th><td>'+E(fact['left'])+'</td><td>'+E(fact['right'])+'</td></tr>'
+  body+='</tbody></table></div></section><section><h2>Compare the recorded numbers</h2><ul>'
+  for fact in record['facts']:
+   if fact['label'] in ('1st Serve %','1st Serve Points Won','2nd Serve Points Won') and '%' in fact['left'] and '%' in fact['right']:
+    left=int(fact['left'].split('%')[0]);right=int(fact['right'].split('%')[0]);delta=left-right
+    body+='<li>'+E(fact['label'])+': '+E(record['players'][0])+' '+str(left)+'%, '+E(record['players'][1])+' '+str(right)+'%; the signed difference is '+str(delta)+' percentage points, using the source’s rounded figures.</li>'
+  body+='</ul><p>First-serve percentage and first-serve points won answer different questions. The former counts serves that landed in; the latter counts points won after a first serve. Fractions in the table show the reported denominator. These match figures do not establish a player’s overall ability or explain the cause of a result.</p></section>'
+ else:
+  body+='<p class="guide-intro">A source-attributed tennis reference for '+E(name)+'. The information below was checked on '+E(record['checked_at'][:10])+'. Rankings and points are a snapshot of what the source reported, not a live ranking feed.</p><section><h2>Player facts and reported rankings</h2><table style="width:100%;table-layout:fixed;overflow-wrap:anywhere"><thead><tr><th scope="col">Field</th><th scope="col">Source value</th></tr></thead><tbody>'
+  for fact in record['facts']:body+='<tr><th scope="row">'+E(fact['label'])+'</th><td>'+E(fact['value'])+'</td></tr>'
+  body+='</tbody></table></section><section><h2>How to use this snapshot</h2><p>Singles and doubles rankings refer to different lists. A career-high ranking is a peak reported by the source, not the same as the listed current ranking. Ranking points are not match scores. Properties omitted by the source are left out here.</p>'
+  if any(f['label']=='Playing hand code' for f in record['facts']):body+='<p>Source hand codes R and L mean right-handed and left-handed. Backhand codes 1 and 2 describe one-handed and two-handed backhands. Country codes are preserved exactly as listed by the source.</p>'
+  body+='</section>'
+ body+='<section><h2>Source and update scope</h2><p><a href="'+E(record['source_url'],quote=True)+'">Open the original '+('match record' if is_match else 'player reference')+'</a>. Checked '+E(record['checked_at'][:10])+'. Consult the source for subsequent updates. This page does not supply player footage or imply endorsement by the player or publisher.</p><p>If you record tennis yourself, <a href="/try-tracer">AceCut’s optional editing tool</a> can be used with footage you own or may edit. It does not produce the statistics shown here.</p></section></article>'
+ return shell(title,'Dated, source-attributed '+('match statistics for ' if is_match else 'tennis profile for ')+name+'. Includes the source and snapshot date.',path,body)

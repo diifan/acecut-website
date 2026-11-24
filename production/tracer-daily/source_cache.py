@@ -1,26 +1,41 @@
 """Bounded tennis evidence cache, shared per URL; pending fetches are not rejected intents."""
-import concurrent.futures,hashlib,html,ipaddress,re,socket,urllib.parse,urllib.request
+import concurrent.futures,hashlib,html,ipaddress,re,socket,urllib.parse,urllib.request,ast,requests,threading
 from html.parser import HTMLParser
 from common import *
 from keyword_input import db,counts,norm
 from intent_router import route
 from editorial_topics import topic,supported
+from equipment_profiles import for_row,grounded
+from tennis_records import for_row as record_for_row,grounded as record_grounded
 class Text(HTMLParser):
- def __init__(self):super().__init__();self.skip=0;self.title=False;self.head=False;self.parts=[];self.titles=[];self.headings=[]
+ def __init__(self):super().__init__();self.skip=0;self.title=False;self.head=False;self.parts=[];self.titles=[];self.headings=[];self.sections=[];self.section_heading='';self.section_parts=[];self.heading_parts=[];self.tables=[];self.table=None;self.table_row=None;self.cell=None
  def handle_starttag(self,tag,attrs):
+  if tag=='table':self.table={'heading':self.section_heading,'rows':[]}
+  if tag=='tr' and self.table is not None:self.table_row=[]
+  if tag in ('th','td') and self.table_row is not None:self.cell=[]
   if tag in ('script','style','noscript'):self.skip+=1
   if tag=='title':self.title=True
-  if tag in ('h1','h2','h3'):self.head=True
+  if tag in ('h1','h2','h3'):
+   if self.section_parts:self.sections.append({'heading':self.section_heading,'text':' '.join(self.section_parts)[:16000]})
+   self.section_parts=[];self.heading_parts=[];self.head=True
  def handle_endtag(self,tag):
+  if tag in ('th','td') and self.cell is not None:
+   self.table_row.append(' '.join(self.cell));self.cell=None
+  if tag=='tr' and self.table_row is not None:
+   self.table['rows'].append(self.table_row);self.table_row=None
+  if tag=='table' and self.table is not None:
+   self.tables.append(self.table);self.table=None
   if tag in ('script','style','noscript'):self.skip=max(0,self.skip-1)
   if tag=='title':self.title=False
-  if tag in ('h1','h2','h3'):self.head=False
+  if tag in ('h1','h2','h3'):self.section_heading=' '.join(self.heading_parts);self.head=False
  def handle_data(self,data):
   if self.skip:return
   s=' '.join(data.split())
   if s:self.parts.append(s)
+  if s and self.cell is not None:self.cell.append(s)
   if self.title:self.titles.append(s)
-  if self.head:self.headings.append(s)
+  if self.head:self.headings.append(s);self.heading_parts.append(s)
+  elif s:self.section_parts.append(s)
 
 def public_url(url):
  u=urllib.parse.urlsplit(url)
@@ -30,19 +45,42 @@ def public_url(url):
  return url
 class Redirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,req,fp,code,msg,headers,newurl):return super().redirect_request(req,fp,code,msg,headers,public_url(newurl))
-def fetch(url):
+_http=threading.local()
+
+def fetch(url,structured=False):
  path=HOME/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json');old=read(path)
- if old and old.get('http')==200:return path,old
+ if old and old.get('http')==200 and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
  for proxy in dict.fromkeys([PROXY,'http://192.168.0.110:10808']):
   try:
-   public_url(url);opener=urllib.request.build_opener(Redirect(),urllib.request.ProxyHandler({'https':proxy}))
-   with opener.open(urllib.request.Request(url,headers={'User-Agent':'AceCut-SourceCheck/1.0 (+https://acecut.goswie.com)'}),timeout=20) as r:
-    if 'text/html' not in r.headers.get('Content-Type',''):raise ValueError('Expected HTML evidence')
-    raw=r.read(1_000_001)
-    if len(raw)>1_000_000:raise ValueError('Source exceeds cache byte bound')
-    body=raw.decode('utf-8',errors='replace');final=r.url;http=r.status
+   if not hasattr(_http,'session'):
+    _http.session=requests.Session();_http.session.trust_env=False
+   current=url
+   for hop in range(6):
+    public_url(current)
+    with _http.session.get(current,headers={'User-Agent':'AceCut-SourceCheck/1.0 (+https://acecut.goswie.com)'},proxies={'https':proxy},timeout=(8,20),stream=True,allow_redirects=False) as response:
+     if response.status_code in (301,302,303,307,308):
+      current=urllib.parse.urljoin(current,response.headers.get('Location',''));public_url(current);continue
+     response.raise_for_status()
+     if 'text/html' not in response.headers.get('Content-Type',''):raise ValueError('Expected HTML evidence')
+     chunks=[];size=0
+     for chunk in response.iter_content(32768):
+      size+=len(chunk)
+      if size>1_000_000:raise ValueError('Source exceeds cache byte bound')
+      chunks.append(chunk)
+     raw=b''.join(chunks);body=raw.decode('utf-8',errors='replace');final=current;http=response.status_code;break
+   else:raise ValueError('Source redirect limit exceeded')
    parser=Text();parser.feed(body)
-   data=dict(source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now())
+   if parser.section_parts:parser.sections.append({'heading':parser.section_heading,'text':' '.join(parser.section_parts)[:16000]})
+   player_fields={}
+   if urllib.parse.urlsplit(url).hostname in ('www.tennisabstract.com','tennisabstract.com'):
+    for field in ('fullname','dob','ht','hand','backhand','country','currentrank','peakrank','peakfirst'):
+     values=re.findall(r'var\s+'+field+r'\s*=\s*([^;]{1,200});',body)
+     if len(set(values))==1:
+      try:
+       value=ast.literal_eval(values[0].strip())
+       if isinstance(value,(str,int,float)):player_fields[field]={'value':value,'literal':values[0].strip()}
+      except (ValueError,SyntaxError):pass
+   data=dict(source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
    break
   except Exception as e:data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
  atomic(path,data);return path,data
@@ -51,13 +89,16 @@ FAMILIES=[('drop_shot',r'\bdrop shots?\b'),('lob',r'\b(?:lobs?|lobbing)\b'),('ov
 STOP={'how','to','a','an','the','in','on','for','of','and','with','best','tennis','is','what','at','your','my','do','i'}
 def classify(row,data):
  word=row['keyword']
+ profile=for_row(row);record=record_for_row(row)
  editorial=topic(word)
  routed=route(word,row.get('evidence_url',''),'tennis')
  if routed['routing_state']=='out_of_scope':return None,'unrelated_search_intent'
- family=('editorial:'+editorial) if editorial else next((f for f,p in FAMILIES if re.search(p,word,re.I)),None)
+ family=('record:'+record['id']) if record else ('equipment:'+profile['id']) if profile else ('editorial:'+editorial) if editorial else next((f for f,p in FAMILIES if re.search(p,word,re.I)),None)
  if not family:return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
- if not editorial and EXCLUDE.search(word):return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
+ if not editorial and not profile and not record and EXCLUDE.search(word):return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
  if data.get('http')!=200:return None,'source_fetch_pending'
+ if record:return (family,None) if record_grounded(record,data) else (None,'source_record_facts_changed')
+ if profile:return (family,None) if grounded(profile,data) else (None,'source_equipment_facts_changed')
  if editorial:
   return (family,None) if supported(word,data) else (None,'source_topic_answer_not_supported')
  text=norm(data.get('text',''));identity=norm(data.get('title','')+' '+' '.join(data.get('headings',[]))+' '+urllib.parse.urlsplit(row['evidence_url']).path.replace('-',' '))
@@ -75,6 +116,10 @@ def classify(row,data):
  return family,None
 
 def intent_key(row):
+ record=record_for_row(row)
+ if record:return 'record:'+record.get('canonical_id',record['id'])
+ profile=for_row(row)
+ if profile:return 'equipment:'+profile.get('canonical_id',profile['id'])
  editorial=topic(row['keyword'])
  if editorial:return 'editorial:'+editorial
  family=next((f for f,p in FAMILIES if re.search(p,row['keyword'],re.I)),None)

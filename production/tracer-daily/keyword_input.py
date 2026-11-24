@@ -30,6 +30,7 @@ def parse(row):
 def db():
  c=sqlite3.connect(HOME/'keyword-pool.sqlite',timeout=60);c.row_factory=sqlite3.Row
  c.execute('CREATE TABLE IF NOT EXISTS keywords (normalized TEXT PRIMARY KEY, keyword TEXT NOT NULL, volume REAL NOT NULL,kd REAL NOT NULL,evidence_url TEXT NOT NULL,metric_timestamp TEXT NOT NULL,source_sha256 TEXT NOT NULL,source_path TEXT NOT NULL,status TEXT NOT NULL DEFAULT "candidate",day TEXT,published_url TEXT,evidence_path TEXT,error TEXT)')
+ c.execute('CREATE TABLE IF NOT EXISTS keyword_sources(normalized TEXT,volume REAL,kd REAL,evidence_url TEXT,metric_timestamp TEXT,source_sha256 TEXT,source_path TEXT,PRIMARY KEY(normalized,evidence_url,metric_timestamp,source_sha256))')
  c.execute('CREATE TABLE IF NOT EXISTS import_runs (pool_sha256 TEXT,manifest_sha256 TEXT,imported_at TEXT,counts TEXT)');return c
 
 def bind(pool,manifest):
@@ -63,7 +64,10 @@ def ingest():
  binding=read(HOME/'keyword-input.json')
  if not binding:raise RuntimeError('Waiting for controller Semrush keywords.csv/source manifest paths; video-title input disabled')
  binding=dict(binding,pool_sha256=sha(Path(binding['pool_path'])),manifest_sha256=sha(Path(binding['manifest_path'])))
- index=originals(binding);c=db();counts={'input_rows':0,'added':0,'existing_preserved':0,'rejected':0,'unproven':0};errors=[]
+ index=originals(binding);c=db()
+ alternatives=[(key[0],key[1],key[2],key[3],key[4],digest,path) for key,matches in index.items() for digest,path in matches]
+ c.executemany('INSERT OR IGNORE INTO keyword_sources VALUES(?,?,?,?,?,?,?)',alternatives)
+ counts={'input_rows':0,'added':0,'existing_preserved':0,'rejected':0,'unproven':0};errors=[]
  for row in csv.DictReader(io.StringIO(Path(binding['pool_path']).read_text(encoding='utf-8-sig'))):
   counts['input_rows']+=1
   try:r=parse(row)

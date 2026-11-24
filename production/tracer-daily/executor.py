@@ -3,15 +3,17 @@
 import argparse,datetime,json,re,sys,time,urllib.request,xml.etree.ElementTree as ET
 from common import *
 from keyword_input import db,counts,ingest,bind
-from source_cache import verify
+from source_cache import verify,intent_key
 from content_engine import render,slug,hubs
 
 def capacity():
- c=db();occupied={slug(dict(r)) for r in c.execute('select * from keywords where status in ("reserved","published")')}
+ c=db();held=[dict(r) for r in c.execute('select * from keywords where status in ("reserved","published")')];occupied={slug(r) for r in held};occupied_intents={intent_key(r) for r in held}
  for row in c.execute('select * from keywords where status="verified" order by rowid').fetchall():
-  route=slug(dict(row))
+  route=slug(dict(row));intent=intent_key(dict(row))
+  if intent in occupied_intents:
+   c.execute('update keywords set status="excluded",error="duplicate_selected_intent" where normalized=?',(row['normalized'],));continue
   if not route or route in occupied or (WORK/'public/tennis-tracer'/(route+'.html')).exists():c.execute('update keywords set status="excluded",error="occupied_or_duplicate_slug" where normalized=?',(row['normalized'],))
-  else:occupied.add(route)
+  else:occupied.add(route);occupied_intents.add(intent)
  c.commit();info=counts();binding=read(HOME/'keyword-input.json',{})
  payload=dict(checked_at=time.time(),eligible_available=info['verified_available'],app='acecut',keyword_pool=info,source_kind='semrush_keywords')
  # Only this agreed capacity file is written in the controller-owned producer directory.
@@ -19,7 +21,16 @@ def capacity():
  return info
 
 def refresh(day):
+ previous=read(HOME/(day+"-receipt.json"),{})
+ if previous.get("state") in ("prepared","published"):
+  return previous
  imported=ingest()
+ from harvest_equipment import ensure_profiles
+ ensure_profiles(HOME)
+ from harvest_records import ensure_records
+ ensure_records(HOME)
+ from evidence_selection import select_verified_alternatives
+ select_verified_alternatives(HOME)
  receipt(day,state='validating_keyword_input',source_kind='semrush_keywords',keyword_sources=[dict(source='Semrush organic Positions',binding=read(HOME/'keyword-input.json'),import_counts=imported)],keyword_pool=counts(),blockers=[])
  verify(day);capacity()
 
