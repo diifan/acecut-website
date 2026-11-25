@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-25",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 9,
+  "source_kind": "semrush_keywords",
+  "base_commit": "7d02bef602d195491eeed86e95fbd5dca40ba311",
+  "pages": [
+    {
+      "keyword": "babolat pure aero 100 tennis racquet",
+      "normalized": "babolat pure aero 100 tennis racquet",
+      "url": "https://acecut.goswie.com/tennis-tracer/babolat-pure-aero-100-tennis-racquet",
+      "evidence_url": "https://www.tennisnerd.net/gear/racquets/babolat-pure-aero-2026/62418",
+      "demand_url": "https://www.tennisnerd.net/gear/racquets/babolat-pure-aero-series/21958",
+      "volume": 390.0,
+      "kd": 27.0,
+      "metric_timestamp": "2026-10-18",
+      "source_sha256": "e6fa10ca6cfff563a9d54bebc7fb1f224c58ae798bf2e23498bae969cd3b05fd",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisnerd.net-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd0-30.csv",
+      "sha256": "255d84b6905d674282cb290eebb63aef99c003cdfe2c4dbda9ab772069584c80",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/f2fd4cb568828475cae1e6e49913f55de24d09438c017268548b52f78532d0a5.json",
+      "evidence_sha256": "303516895645e7561324b2a34d3e2ce6ca2f1f50566f7c3c62e684118f22d37a"
+    }
+  ]
+}
