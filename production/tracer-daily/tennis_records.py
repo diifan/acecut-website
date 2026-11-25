@@ -93,7 +93,11 @@ def aligned(word,record):
  if re.search(r'\brank(?:ing)?\b',word,re.I) and not any('Ranking' in f['label'] for f in record['facts']):return False
  wanted=tokens(word)-{'tennis','atp','wta','player','profile','age','height','ranking','rank','stats','statistics','who','is'};actual=tokens(record['name'])
  surname=re.findall(r'[a-z]+',fold(record['name']))[-1]
- return bool(wanted and surname in wanted and wanted<=actual)
+ # The original ranking URL binds this query to this exact player record.
+ # Allow given-name initials, but never a surname initial or a different full name.
+ given=actual-{surname}
+ matches=all(t in actual or (len(t)==1 and any(n.startswith(t) for n in given)) for t in wanted)
+ return bool(wanted and surname in wanted and matches)
 
 def grounded(record,data):
  if record['source_sha256']!=data.get('body_sha256'):return False
