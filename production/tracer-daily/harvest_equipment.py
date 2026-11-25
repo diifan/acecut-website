@@ -15,19 +15,23 @@ def harvest(limit=2000,network_limit=200,home=None):
  for row in rows:
   row={**row,'keyword':row.get('keyword',row.get('Keyword','')),'evidence_url':row.get('evidence_url',row.get('URL','')),'volume':row.get('volume',row.get('Search Volume','0'))}
   url=row['evidence_url']
-  if not re.search(r'/gear/racquets/|racquet-review|racket-review',url):continue
+  gear_url=bool(re.search(r'/gear/racquets/|racquet-review|racket-review',url))
+  named_model=bool(re.search(r'\b(?:babolat|wilson|yonex|prince|dunlop|tecnifibre|solinco|artengo|donnay|volkl|prokennex)\b|\bhead\s+(?:speed|radical|gravity|prestige|extreme|boom|ti|graphene|liquidmetal|microgel|flexpoint)',row['keyword'],re.I))
+  if not (gear_url or named_model):continue
   if re.search(r'/best-|/the-best-|/top-\d',url):continue
   groups.setdefault(url,[]).append(row)
  # Existing successful structured sources cost no network request; failures remain visible.
  selected=sorted(groups,key=lambda u:(-len(groups[u]),u))[:limit]
  prior=read(home/'equipment-profiles.json',{}).get('profiles',{})
  selected=list(dict.fromkeys(selected+[r['source_url'] for r in prior.values() if r['source_url'] in groups]))
- profiles={};words={};receipts=[];started=now();network=set()
+ profiles={};words={};receipts=[];started=now();network=set();pending=set()
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
   if cached.get('checked_at') and cached.get('http')!=200 and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
   need_tables=bool(re.search(r'tenniscompanion.org/gear/racquets/[^/]+/$',url))
-  if not (cached.get('http')==200 and cached.get('sections') and (not need_tables or 'tables' in cached)) and len(network)<network_limit:network.add(url)
+  if not (cached.get('http')==200 and cached.get('sections') and (not need_tables or 'tables' in cached)):
+   if len(network)<network_limit:network.add(url)
+   else:pending.add(url)
  def load(url):
   need_tables=bool(re.search(r'tenniscompanion.org/gear/racquets/[^/]+/$',url))
   if url in network:return fetch(url,'tables' if need_tables else True)
@@ -53,7 +57,7 @@ def harvest(limit=2000,network_limit=200,home=None):
    if len(receipts)%20==0:
     print(json.dumps({'fetched':len(receipts),'target':len(selected),'profiles':len(profiles),'matched_keywords':len(words)}),flush=True)
     atomic(home/'equipment-harvest-progress.json',{'started':started,'checked':len(receipts),'target':len(selected),'profiles':len(profiles),'matched_keywords':len(words)})
- data={'version':1,'created_at':now(),'pool_sha256':hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest(),'profiles':profiles,'keywords':words,'receipt':receipts,'source_candidates':len(groups),'checked_sources':len(selected),'provenance':'Original exported keyword URLs; numeric facts extracted from explicit labelled source sections'}
+ data={'version':1,'created_at':now(),'pool_sha256':hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest(),'profiles':profiles,'keywords':words,'receipt':receipts,'source_candidates':len(groups),'checked_sources':len(selected),'pending_source_count':len(pending),'provenance':'Original exported keyword URLs; numeric facts extracted from explicit labelled source sections'}
  atomic(home/'equipment-profiles.json',data)
  print(json.dumps({'finished':True,'profiles':len(profiles),'matched_keywords':len(words),'sources':len(selected)}),flush=True)
  return data
@@ -64,7 +68,7 @@ def ensure_profiles(home=None):
  if not binding:return
  digest=hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest()
  age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['created_at'])).total_seconds() if old.get('created_at') else float('inf')
- if old.get('pool_sha256')!=digest or age>21600 or (age>300 and any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[]))):harvest(network_limit=200,home=home)
+ if old.get('pool_sha256')!=digest or age>21600 or (age>300 and (old.get('pending_source_count',0)>0 or any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[])))):harvest(network_limit=200,home=home)
 
 if __name__=='__main__':
  parser=argparse.ArgumentParser();parser.add_argument('--limit',type=int,default=2000);parser.add_argument('--network-limit',type=int,default=200);args=parser.parse_args();harvest(args.limit,args.network_limit)

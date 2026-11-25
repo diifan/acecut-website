@@ -43,3 +43,15 @@ class Recovery(unittest.TestCase):
    _,second=source_cache.fetch('https://example.invalid/two')
    self.assertEqual(session.get.call_count,1);self.assertIn('cooldown',second['error'])
 if __name__=='__main__':unittest.main()
+
+class DueBatchMinimum(unittest.TestCase):
+ def test_due_batch_does_not_wait_for_one_hundred_pages(self):
+  import datetime
+  class Fixed(datetime.datetime):
+   @classmethod
+   def now(cls,tz=None):return cls(2026,11,25,17,0,tzinfo=tz)
+  cfg={'timezone':'Asia/Shanghai','hour':12,'minute':30,'incremental_min_pages':100}
+  with patch.object(executor.datetime,'datetime',Fixed):
+   self.assertEqual(executor.batch_minimum(cfg,'2026-11-25',520),1)
+   self.assertEqual(executor.batch_minimum(cfg,'2026-11-26',520),100)
+   self.assertEqual(executor.batch_minimum(cfg,'2026-11-26',5),5)

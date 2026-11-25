@@ -90,6 +90,11 @@ def revalidate_inventory(day):
  if rejected:receipt(day,revalidation_rejected=rejected)
  return rejected
 
+def batch_minimum(cfg,day,remaining):
+ local=datetime.datetime.now(ZoneInfo(cfg['timezone']))
+ due=day==local.date().isoformat() and (local.hour,local.minute)>=(cfg['hour'],cfg['minute'])
+ return 1 if due else min(cfg.get('incremental_min_pages',100),remaining)
+
 def prepare(day,collect=True):
  cfg=config();target=cfg['target'];r=read(HOME/(day+'-receipt.json'),{})
  if r.get('state')=='published':return r
@@ -104,7 +109,7 @@ def prepare(day,collect=True):
  assert len(rows)<=remaining,'Reservations exceed remaining daily target'
  reserved_count=len(rows)
  rows += [dict(x) for x in c.execute('select * from keywords where status="verified" order by rowid limit ?',(remaining-len(rows),))]
- minimum=min(cfg.get('incremental_min_pages',100),remaining)
+ minimum=batch_minimum(cfg,day,remaining)
  if not rows or (len(rows)<minimum and not reserved_count):
   pool=counts();states=pool['status_counts'];backlog=sum(states.get(s,0) for s in ('needs_template','needs_review','freshness_required','specialist_review'))
   blockers=[dict(type='verified_shortfall',count=max(0,remaining-len(rows))),dict(type='content_processing_backlog',count=backlog),dict(type='fetch_pending',count=pool['fetch_pending_count'])]
