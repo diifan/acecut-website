@@ -1,0 +1,40 @@
+{
+  "day": "2026-11-25",
+  "target": 2,
+  "daily_target": 2000,
+  "sequence": 10,
+  "source_kind": "semrush_keywords",
+  "base_commit": "37beb5f859b14446e43bf2ca6dc81c2f17646849",
+  "pages": [
+    {
+      "keyword": "babolat pure drive 98",
+      "normalized": "babolat pure drive 98",
+      "url": "https://acecut.goswie.com/tennis-tracer/babolat-pure-drive-98",
+      "evidence_url": "https://www.tennis-warehouse.com/learning_center/racquet_reviews/PD98Rreview.html",
+      "demand_url": "https://www.tennis.com/news/articles/racquet-review-babolat-pure-drive-98",
+      "volume": 390.0,
+      "kd": 19.0,
+      "metric_timestamp": "2026-09-12",
+      "source_sha256": "4e7f734b360728b66b8592a9c03180e3fa4c92b80a77caa783153f7f89f3da89",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261125T033622Z/exports/tennis.com-organic.Positions-us-20261123-2026-11-25T03_36_27Z-kd0-30.csv.partial",
+      "sha256": "044091cfbc7b9656c620e88056f8936167c1001ab4f75dc05ae3d4201b72b31a",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/334d7a924c20e86d5d3401945d48bad824e9625529d87b47f38202fea21d11ff.json",
+      "evidence_sha256": "2da3e682820fa33cdf9d5bcc6814fd4a6d40a54c8e33fe2efd124db11d5a8987"
+    },
+    {
+      "keyword": "yonex vcore 100 review",
+      "normalized": "yonex vcore 100 review",
+      "url": "https://acecut.goswie.com/tennis-tracer/yonex-vcore-100-review",
+      "evidence_url": "https://www.tennis-warehouse.com/learning_center/racquet_reviews/VC108Greview.html",
+      "demand_url": "https://www.tennis.com/news/articles/racquet-review-yonex-vcore-100",
+      "volume": 110.0,
+      "kd": 16.0,
+      "metric_timestamp": "2026-09-28",
+      "source_sha256": "c396e53c911d20b32f8b780520067f7315fceb03ce80eec027338c2381e670d5",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennis.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "dadfbda41030910d8084a0dc75d95e1a1f87a282af33776c7cd7f34ea257eded",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/21b42af1d505f2f14b941b0969d8a601d6651b79ee5407c00cda285c51463b9e.json",
+      "evidence_sha256": "c92b11939ff54c0912c46b75c6374f730cc02ac897971b622ba80f3765a40750"
+    }
+  ]
+}
