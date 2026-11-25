@@ -1,5 +1,5 @@
-import time
 """Bounded collection of publicly rendered player facts and completed-match data."""
+import time
 import io,argparse,collections,concurrent.futures,csv,datetime,hashlib,json,re,threading,os,fcntl
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -52,7 +52,7 @@ def _harvest(limit=12000,network_limit=500,home=None):
    if len(receipts)%100==0:
     progress={'started':started,'checked':len(receipts),'target':len(selected),'records':len(records),'matched_keywords':len(words),'kinds':dict(collections.Counter(r['kind'] for r in records.values()))}
     atomic(home/'records-harvest-progress.json',progress);print(json.dumps(progress),flush=True)
- data={'version':1,'created_at':now(),'pool_sha256':hashlib.sha256(pool.read_bytes()).hexdigest(),'records':records,'keywords':words,'receipt':receipts,'selected_sources':len(selected),'network_requests':len(network)}
+ data={'version':1,'created_at':now(),'pool_sha256':hashlib.sha256(pool.read_bytes()).hexdigest(),'records':records,'keywords':words,'receipt':receipts,'selected_sources':len(selected),'network_requests':len(network),'pending_score_sources':len(score_urls-network)}
  atomic(home/'tennis-records.json',data)
  print(json.dumps({'finished':True,'records':len(records),'matched_keywords':len(words),'kinds':dict(collections.Counter(r['kind'] for r in records.values()))}),flush=True);return data
 
@@ -74,7 +74,7 @@ def ensure_records(home=None):
  if not binding:return
  old=read(home/'tennis-records.json',{});digest=hashlib.sha256(Path(binding['pool_path']).read_bytes()).hexdigest()
  age=(datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['created_at'])).total_seconds() if old.get('created_at') else float('inf')
- if old.get('pool_sha256')!=digest or age>21600 or (age>300 and any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[]))):harvest(network_limit=500,home=home)
+ if old.get('pool_sha256')!=digest or age>21600 or (age>300 and (old.get('pending_score_sources',0)>0 or any('pending' in str(r.get('error','')).lower() for r in old.get('receipt',[])))):harvest(network_limit=500,home=home)
 
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--limit',type=int,default=12000);p.add_argument('--network-limit',type=int,default=500);a=p.parse_args();harvest(a.limit,a.network_limit)

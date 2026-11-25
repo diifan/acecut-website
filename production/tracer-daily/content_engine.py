@@ -66,6 +66,7 @@ def render_editorial(row,evidence,spec,related):
 
 
 FIELD_NOTES={
+ 'balance':'The balance point describes where the racket balances along its length. Keep the source measurement units and setup condition; strings and added accessories can change it.',
  'head_size':'The area of the racket head. Keep square-inch and square-centimetre figures separate from linear measurements.',
  'length':'Overall racket length. Compare the same unit and confirm whether you are looking at a standard or extended variant.',
  'strung_weight':'Mass with strings installed in the cited specification. This is not interchangeable with an unstrung figure.',

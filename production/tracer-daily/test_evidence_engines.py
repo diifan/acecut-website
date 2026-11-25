@@ -76,3 +76,30 @@ class EvidenceCooldownTests(unittest.TestCase):
   with patch.object(source_cache,'read',return_value=old),patch.object(source_cache,'public_url') as network_guard:
    path,data=source_cache.fetch('https://example.test/source','entity')
    self.assertEqual(data,old);network_guard.assert_not_called()
+
+class EquipmentLabelVariants(unittest.TestCase):
+ def test_parenthetical_weight_and_metric_length_keep_exact_condition(self):
+  d={'http':200,'body_sha256':'fixture','checked_at':'2026-11-25','title':'Head Speed MP Review','tables':[],'sections':[{'heading':'Head Speed MP','text':'Head size: 100 in² Weight (unstrung): 300g Length: 685 mm Balance: 320 mm Stringing Pattern: 16/19'}]}
+  r=eq.extract(d,'https://example.test/mp','fixture')[0]
+  self.assertEqual(r['facts']['unstrung_weight']['value'],'300g');self.assertNotIn('strung_weight',r['facts']);self.assertEqual(r['facts']['length']['value'],'685 mm');self.assertEqual(r['facts']['balance']['value'],'320 mm');self.assertTrue(eq.grounded(r,d))
+ def test_multiple_unstrung_weights_remain_ambiguous(self):
+  d={'http':200,'body_sha256':'fixture','checked_at':'2026-11-25','title':'Head Speed MP Review','tables':[],'sections':[{'heading':'Head Speed MP','text':'Head size: 100 in² Weight (unstrung): 300g Weight (unstrung): 315g Length: 685 mm Balance: 320 mm String Pattern: 16/19'}]}
+  self.assertEqual(eq.extract(d,'https://example.test/mp','fixture'),[])
+
+
+class IndependentSpecTables(unittest.TestCase):
+ def test_dual_unit_tables_are_not_conflicting_models(self):
+  d={'http':200,'body_sha256':'fixture','checked_at':'2026-11-25','title':'Head Speed MP Review','sections':[],'tables':[{'heading':'Tech Specs','rows':[['Length','27 in'],['Head Size','100 sq in'],['Weight','11.2 oz'],['Balance Point','12.99 in'],['String Pattern','16 x 19']]},{'heading':'Tech Specs','rows':[['Length','68.58 cm'],['Head Size','645.16 sq cm'],['Weight','318 g'],['Balance Point','32.99 cm'],['String Pattern','16 x 19']]}]}
+  records=eq.extract(d,'https://www.tennis-warehouse.com/learning_center/racquet_reviews/fixture.html','fixture');self.assertEqual(len(records),1);r=records[0]
+  self.assertEqual(r['facts']['length']['value'],'27 in');self.assertEqual(r['facts']['listed_weight']['value'],'11.2 oz');self.assertTrue(eq.grounded(r,d))
+  with patch.object(ce,'shell',side_effect=lambda title,description,path,body:body):body=ce.render_equipment({'keyword':'head speed mp'},d,r)
+  self.assertIn('Balance',body)
+  d['tables'][0]['rows'][2][1]='99 oz';self.assertFalse(eq.grounded(r,d))
+
+
+class ExactEquipmentIdentity(unittest.TestCase):
+ def test_alphabetic_variant_cannot_be_dropped(self):
+  self.assertFalse(eq.aligned('yonex vcore 100 s',{'name':'Yonex VCORE 100+ 8th Gen Racquet'}))
+  self.assertFalse(eq.aligned('wilson pro staff x v14',{'name':'Wilson Pro Staff 97 v14'}))
+  self.assertFalse(eq.aligned('yonex vcore 100',{'name':'Yonex VCORE 100+ 8th Gen Racquet'}))
+  self.assertTrue(eq.aligned('yonex vcore 100 plus',{'name':'Yonex VCORE 100+ 8th Gen Racquet'}))

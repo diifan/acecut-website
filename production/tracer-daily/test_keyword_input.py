@@ -93,4 +93,12 @@ class InputBoundary(unittest.TestCase):
   common.atomic(self.root/'2099-01-01-receipt.json',{'source_kind':'video_titles'})
   with patch.object(executor,'api',side_effect=AssertionError('Vercel must not run')):
    with self.assertRaises(RuntimeError):executor.publish('2099-01-01',immediate=True)
+
+ def test_independent_fact_source_preserves_and_rechecks_demand_tuple(self):
+  self.rows=[self.row()];self.write();k.bind(self.pool,self.manifest);k.ingest()
+  row=dict(k.db().execute('select * from keywords').fetchone());index=k.originals(common.read(self.root/'keyword-input.json'))
+  row['demand_url']=row['evidence_url'];row['evidence_url']='https://different.example/tennis-specification'
+  self.assertTrue(k.demand_proven(row,index))
+  row['volume']=99999;self.assertFalse(k.demand_proven(row,index));row['volume']=101
+  row['demand_url']='https://different.example/tennis-specification';self.assertFalse(k.demand_proven(row,index))
 if __name__=='__main__':unittest.main()

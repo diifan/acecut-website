@@ -36,6 +36,7 @@ def parse(row):
 def db():
  c=sqlite3.connect(HOME/'keyword-pool.sqlite',timeout=60);c.row_factory=sqlite3.Row
  c.execute('CREATE TABLE IF NOT EXISTS keywords (normalized TEXT PRIMARY KEY, keyword TEXT NOT NULL, volume REAL NOT NULL,kd REAL NOT NULL,evidence_url TEXT NOT NULL,metric_timestamp TEXT NOT NULL,source_sha256 TEXT NOT NULL,source_path TEXT NOT NULL,status TEXT NOT NULL DEFAULT "candidate",day TEXT,published_url TEXT,evidence_path TEXT,error TEXT)')
+ if 'demand_url' not in {r[1] for r in c.execute('PRAGMA table_info(keywords)')}:c.execute('ALTER TABLE keywords ADD COLUMN demand_url TEXT')
  c.execute('CREATE TABLE IF NOT EXISTS keyword_sources(normalized TEXT,volume REAL,kd REAL,evidence_url TEXT,metric_timestamp TEXT,source_sha256 TEXT,source_path TEXT,PRIMARY KEY(normalized,evidence_url,metric_timestamp,source_sha256))')
  c.execute('CREATE TABLE IF NOT EXISTS import_runs (pool_sha256 TEXT,manifest_sha256 TEXT,imported_at TEXT,counts TEXT)');return c
 
@@ -98,3 +99,8 @@ def counts():
  reasons={r[0]:r[1] for r in c.execute('select error,count(*) from keywords where error is not null group by error')}
  funnel={'imported_keywords':sum(states.values()),'intent_rejected':sum(reasons.get(k,0) for k in ('unrelated_search_intent','no_supported_tracer_workflow_intent')),'source_fetch_pending':states.get('fetch_failed',0),'source_or_context_rejected':sum(reasons.get(k,0) for k in ('source_keyword_identity_not_aligned','source_not_tennis_or_insufficient_text','source_context_inadequate','source_topic_answer_not_supported')),'consolidated_source_candidates':reasons.get('duplicate_source_intent',0),'needs_template':states.get('needs_template',0),'needs_review':states.get('needs_review',0),'freshness_required':states.get('freshness_required',0),'specialist_review':states.get('specialist_review',0),'unique_available_pages':states.get('verified',0)}
  return dict(funnel=funnel,path=str(HOME/'keyword-pool.sqlite'),source_kind='semrush_keywords',status_counts=states,candidate_count=sum(states.values()),fetch_pending_count=states.get('candidate',0)+states.get('fetch_failed',0),verified_available=states.get('verified',0),filters={'kd_lt':30,'volume_gt':100})
+
+
+def demand_proven(row,index):
+ row=dict(row);key=(row['normalized'],row['volume'],row['kd'],url(row.get('demand_url') or row['evidence_url']),str(row['metric_timestamp']))
+ return (row['source_sha256'],str(Path(row['source_path']).resolve())) in index.get(key,[])

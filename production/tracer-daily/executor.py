@@ -2,7 +2,7 @@
 """Incremental AceCut publishing; shared controller owns UI and mutable config."""
 import argparse,datetime,json,re,sys,time,urllib.request,urllib.error,xml.etree.ElementTree as ET,concurrent.futures
 from common import *
-from keyword_input import db,counts,ingest,bind
+from keyword_input import db,counts,ingest,bind,originals,demand_proven
 from source_cache import verify,intent_key
 from content_engine import render,slug,hubs
 
@@ -31,11 +31,16 @@ def refresh(day):
  ensure_records(HOME)
  from evidence_selection import select_verified_alternatives
  select_verified_alternatives(HOME)
+ from harvest_supplemental import ensure as ensure_supplemental
+ ensure_supplemental()
+ from supplemental_evidence import select as select_supplemental
+ select_supplemental(HOME)
  receipt(day,state='validating_keyword_input',source_kind='semrush_keywords',keyword_sources=[dict(source='Semrush organic Positions',binding=read(HOME/'keyword-input.json'),import_counts=imported)],keyword_pool=counts(),blockers=[])
  verify(day);capacity()
 
 def validate(rows,base):
  target=len(rows);urls=set();titles=set();bodies=set();records=[]
+ demand_index=originals(read(HOME/'keyword-input.json'))
  for row in rows:
   path='/tennis-tracer/'+slug(row);p=WORK/'public'/(path[1:]+'.html');text=p.read_text();title=re.search(r'<title>(.*?)</title>',text)[1]
   assert title not in titles,'Duplicate title';titles.add(title)
@@ -44,7 +49,8 @@ def validate(rows,base):
   assert sha(p) not in bodies,'Duplicate body';bodies.add(sha(p));urls.add(ORIGIN+path)
   evidence=Path(row['evidence_path']);assert read(evidence)['http']==200
   assert row['kd']<30 and row['volume']>100
-  records.append(dict(keyword=row['keyword'],normalized=row['normalized'],url=ORIGIN+path,evidence_url=row['evidence_url'],volume=row['volume'],kd=row['kd'],metric_timestamp=row['metric_timestamp'],source_sha256=row['source_sha256'],source_path=row['source_path'],sha256=sha(p),evidence_path=str(evidence),evidence_sha256=sha(evidence)))
+  assert demand_proven(row,demand_index),'Keyword demand provenance mismatch'
+  records.append(dict(keyword=row['keyword'],normalized=row['normalized'],url=ORIGIN+path,evidence_url=row['evidence_url'],demand_url=row.get('demand_url') or row['evidence_url'],volume=row['volume'],kd=row['kd'],metric_timestamp=row['metric_timestamp'],source_sha256=row['source_sha256'],source_path=row['source_path'],sha256=sha(p),evidence_path=str(evidence),evidence_sha256=sha(evidence)))
  assert len(urls)==target
  for name in git('ls-tree','-r','--name-only',base).splitlines():
   if not name.startswith(('public/','api/','server/')) or name in ('public/tennis-ball-tracer.html','public/sitemap.xml'):continue
@@ -173,7 +179,9 @@ def publish(day,immediate=False):
  assert 0<batch_target<=cfg['target']-r.get('published_count',0),'Batch exceeds remaining daily goal'
  manifest=Path(r['pages_path']);assert sha(manifest)==r['pages_sha256'];m=read(manifest)
  assert m.get('source_kind')=='semrush_keywords' and len(m['pages'])==batch_target
+ demand_index=originals(read(HOME/'keyword-input.json'))
  for p in m['pages']:
+  assert demand_proven(p,demand_index),'Published keyword demand provenance mismatch'
   assert 0<=p['kd']<30 and p['volume']>100
   assert sha(Path(p['source_path']))==p['source_sha256'] and sha(Path(p['evidence_path']))==p['evidence_sha256']
  for p in m['pages']:assert sha(WORK/'public'/(p['url'].removeprefix(ORIGIN+'/')+'.html'))==p['sha256']

@@ -46,8 +46,8 @@ def select_verified_alternatives(home=None):
     matches=[r for r in by_url.get(alternative['evidence_url'],[]) if aligned(row['keyword'],r)]
     record=next((r for r in matches if grounded(r,read(Path(r['evidence_path']),{}))),None)
     if not record:continue
-    values=(alternative['volume'],alternative['kd'],alternative['evidence_url'],alternative['metric_timestamp'],alternative['source_sha256'],alternative['source_path'],record['evidence_path'],row['normalized'])
-    c.execute('update keywords set volume=?,kd=?,evidence_url=?,metric_timestamp=?,source_sha256=?,source_path=?,evidence_path=?,status="candidate",error=NULL where normalized=?',values)
+    values=(alternative['volume'],alternative['kd'],alternative['evidence_url'],alternative['metric_timestamp'],alternative['source_sha256'],alternative['source_path'],record['evidence_path'],alternative['evidence_url'],row['normalized'])
+    c.execute('update keywords set volume=?,kd=?,evidence_url=?,metric_timestamp=?,source_sha256=?,source_path=?,evidence_path=?,demand_url=?,status="candidate",error=NULL where normalized=?',values)
     data.setdefault('keywords',{})[row['normalized']]=record['id']
     if row['evidence_url']!=alternative['evidence_url']:changes.append({'keyword':row['keyword'],'before_url':row['evidence_url'],'selected_url':alternative['evidence_url'],'source_path':alternative['source_path'],'source_sha256':alternative['source_sha256'],'reason':'Verified entity/specification with matching original Semrush row'})
     break
