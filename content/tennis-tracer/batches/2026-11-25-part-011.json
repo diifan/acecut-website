@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-25",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 11,
+  "source_kind": "semrush_keywords",
+  "base_commit": "0b21a680edbc1bf04435b8f53dad650a5f9fa23b",
+  "pages": [
+    {
+      "keyword": "enzo lima",
+      "normalized": "enzo lima",
+      "url": "https://acecut.goswie.com/tennis-tracer/enzo-lima",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=EnzoCamargoLima",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=EnzoCamargoLima",
+      "volume": 170.0,
+      "kd": 19.0,
+      "metric_timestamp": "2026-09-15",
+      "source_sha256": "e42c5b41e55552fadae5c1e586cbc85db27b6f862f600f170d99255dbbc66f44",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "a4b6d7cca78d3958835e72f743eb0d907c630686f37637a37e136a2de2beb0bd",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/a77d01e65fd04ace2cf810f409e3cb55100f89282ed53ce2be7cfad7b2bb5e41.json",
+      "evidence_sha256": "1dbaaeeddfb8344d83f86a572b4dd63e640775486d067519ff313d7f3386cacd"
+    }
+  ]
+}
