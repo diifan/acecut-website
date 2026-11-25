@@ -61,6 +61,7 @@ class FullBuild(unittest.TestCase):
    if first_size:
     self.assertEqual(r['state'],'published_partial');self.assertEqual(r['published_count'],first_size);self.assertEqual(r['shortfall'],2000-first_size);self.assertFalse(r['ready_for_promotion'])
     original_manifest=Path(r['pages_path']);original_bytes=original_manifest.read_bytes();first_hashes={x['url']:x['sha256'] for x in common.read(original_manifest)['pages']}
+    waiting=executor.prepare(day,collect=False);self.assertEqual(waiting['state'],'published_partial');self.assertFalse(waiting['ready_for_promotion']);self.assertEqual(waiting['published_count'],first_size)
     c=keyword_input.db();c.execute('update keywords set status="verified" where status="needs_review"');c.commit()
     r=executor.prepare(day,collect=False);self.assertEqual(r['batch_target'],2000-first_size);self.assertEqual(r['target'],2000)
     self.assertEqual(original_manifest.read_bytes(),original_bytes)

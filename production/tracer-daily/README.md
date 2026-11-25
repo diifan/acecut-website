@@ -47,18 +47,18 @@ cannot satisfy either the input boundary or the publication source-kind check.
 
 ## Prepare and publish
 
-`executor.py prepare --day YYYY-MM-DD` reserves a complete batch, renders with atomic
+`executor.py prepare --day YYYY-MM-DD` reserves an immutable incremental batch toward the daily target, renders with atomic
 progress every 50 pages, runs the existing Bun build, validates source hashes,
 thresholds, unique titles/routes, internal links, canonicals, all new sitemap entries
 and preservation of baseline assets/API/privacy. It commits locally and stages a
 production-environment Vercel deployment with `--skip-domain`, verifying the live
-alias remains unchanged. No partial batch is uploaded.
+alias remains unchanged. Daily target stays at 2,000; a fully validated smaller batch may publish as published_partial, with the remaining shortfall explicit. Each round has a separate manifest; later rounds preserve earlier published pages. Empty batches never build. The default minimum new round is 100 pages, or the final remaining amount if smaller.
 
 `executor.py publish --day YYYY-MM-DD` checks configured release time, matching target,
 manifest/page/source hashes, READY production deployment, project/commit provenance
 and unchanged main. It fast-forwards GitHub, promotes the validated deployment and
 verifies domain binding, complete live sitemap batch coverage and byte-identical
-sample pages. Failures remain visible; no force pushes or destructive resets occur.
+pages for the entire batch. Network failures retry and persist verification checkpoints bound to the exact deployment and manifest. Failures remain visible; no force pushes or destructive resets occur.
 GitHub auto-deployment can build the same published commit separately.
 
 `tick` wakes every minute, updates heartbeat and reads config. It prepares tomorrow
@@ -84,3 +84,6 @@ video-batch rejection.
 build, and mocked Vercel/online HTTP. Synthetic numbers never enter production state.
 The test also checks disabled scheduling and early-publication refusal. Real keyword
 collection and live batch publication remain separate acceptance requirements.
+
+
+2026-11-25 recovery: retry a READY deployment without rebuilding after a publication/verification error; revalidate all available/reserved source/template bindings before rendering; normalize exported HTTP source URLs to the same HTTPS host/path/query while preserving original CSV hashes and requiring successful evidence verification. Daily schedule prepares tomorrow only after today reaches its target.

@@ -11,7 +11,13 @@ def metric(value):
 
 def url(value):
  u=urllib.parse.urlsplit(value)
- if u.scheme!='https' or not u.hostname or u.username or u.password or u.port not in (443,None):raise ValueError('Source must be a public HTTPS URL')
+ if not u.hostname or u.username or u.password:raise ValueError('Source must be a public HTTPS URL')
+ if u.scheme=='http' and u.port in (80,None):
+  # Upgrade only the transport, preserving host/path/query and original CSV hash.
+  # The resulting HTTPS endpoint must still pass the ordinary live evidence gate.
+  host='['+u.hostname+']' if ':' in u.hostname else u.hostname
+  return urllib.parse.urlunsplit(('https',host,u.path,u.query,''))
+ if u.scheme!='https' or u.port not in (443,None):raise ValueError('Source must be a public HTTPS URL')
  return urllib.parse.urlunsplit((u.scheme,u.netloc,u.path,u.query,''))
 def field(row,*names,default=''):
  for n in names:

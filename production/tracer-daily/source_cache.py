@@ -56,6 +56,13 @@ def fetch(url,structured=False):
   import datetime
   if (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['checked_at'])).total_seconds()<1800:return path,old
  if old and old.get('http')==200 and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
+ host=urllib.parse.urlsplit(url).hostname or ''
+ backoff_path=HOME/'source-host-backoff'/(hashlib.sha256(host.encode()).hexdigest()+'.json')
+ backoff=read(backoff_path,{})
+ if backoff.get('retry_at',0)>time.time():
+  if old:return path,old
+  data=dict(source_url=url,http=None,error='Source host HTTP 429 cooldown',checked_at=now(),retry_at=backoff['retry_at'])
+  atomic(path,data);return path,data
  for proxy in dict.fromkeys([PROXY,'http://192.168.0.110:10808']):
   try:
    if not hasattr(_http,'session'):
@@ -90,7 +97,12 @@ def fetch(url,structured=False):
    break
   except Exception as e:
    data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
-   if isinstance(e,requests.HTTPError) and e.response is not None and e.response.status_code==429:break
+   if isinstance(e,requests.HTTPError) and e.response is not None and e.response.status_code==429:
+    try:delay=max(1800,int(e.response.headers.get('Retry-After','1800')))
+    except ValueError:delay=1800
+    atomic(backoff_path,dict(host=host,retry_at=time.time()+delay,reason='HTTP 429',checked_at=now()))
+    if old and old.get('http')==200:return path,old
+    break
  data['parser_version']=2
  atomic(path,data);return path,data
 EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)

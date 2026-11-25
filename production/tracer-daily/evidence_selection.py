@@ -16,7 +16,13 @@ def candidate_rows(home):
   if c.execute("select 1 from sqlite_master where name='keyword_sources'").fetchone():
    rows.extend(dict(r) for r in c.execute('select k.keyword,s.* from keyword_sources s join keywords k on k.normalized=s.normalized'))
   c.close()
- return rows
+ from keyword_input import url as canonical_url
+ normalized=[]
+ for row in rows:
+  try:row['evidence_url']=canonical_url(row['evidence_url'])
+  except ValueError:continue
+  normalized.append(row)
+ return normalized
 
 def select_verified_alternatives(home=None):
  home=Path(home or HOME);file=home/'keyword-pool.sqlite'

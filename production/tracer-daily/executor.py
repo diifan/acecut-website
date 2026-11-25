@@ -159,6 +159,9 @@ def live_bytes(opener,url):
   except urllib.error.HTTPError as error:
    if error.code not in (404,429,502,503,504) or attempt==5:raise
    time.sleep(2*(attempt+1))
+  except (urllib.error.URLError,TimeoutError,ConnectionError):
+   if attempt==5:raise
+   time.sleep(2*(attempt+1))
 
 def publish(day,immediate=False):
  if read(HOME/(day+'-receipt.json'),{}).get('source_kind')!='semrush_keywords':raise RuntimeError('Publication requires a verified Semrush keyword batch; video-title batches are prohibited')
@@ -177,28 +180,35 @@ def publish(day,immediate=False):
  d=api('/v13/deployments/'+r['prepared_deployment_id']);assert d['projectId']==PROJECT and d['readyState']=='READY' and d['target']=='production' and d['meta']['swieCommit']==r['commit']
  git('fetch','origin','main');head=git('rev-parse','origin/main');assert head in (r['base_commit'],r['commit']),'Production baseline advanced; rebuild before publication'
  # Record in GitHub first, then promote exactly the validated deployment.
- receipt(day,state='publishing')
+ receipt(day,state='publishing',blockers=[])
  if head!=r['commit']:git('push','origin',r['commit']+':refs/heads/main')
  if api('/v4/aliases/acecut.goswie.com')['deploymentId']!=r['prepared_deployment_id']:
   run([CLI,'promote',r['prepared_deployment_id'],'--yes','--scope',SCOPE,'--timeout','90s','--json'],timeout=120)
  alias=api('/v4/aliases/acecut.goswie.com');assert alias['deploymentId']==r['prepared_deployment_id']
- opener=urllib.request.build_opener(urllib.request.ProxyHandler({'https':PROXY}))
+ opener=urllib.request.build_opener(urllib.request.ProxyHandler({'https':os.environ.get('ACECUT_VERIFY_PROXY','http://127.0.0.1:7890')}))
  expected={p['url'] for p in m['pages']}
  for attempt in range(6):
   sitemap=live_bytes(opener,ORIGIN+'/sitemap.xml');urls={x.text for x in ET.fromstring(sitemap).findall('{*}url/{*}loc')}
   if expected<=urls:break
   if attempt==5:raise AssertionError('Live sitemap missing batch URLs')
   time.sleep(2*(attempt+1))
- receipt(day,state='verifying',batch_live_verified_count=0)
+ verification_path=HOME/(day+'-part-'+str(r.get('batch_sequence',1))+'-live-check.json')
+ verification_key=dict(deployment_id=r['prepared_deployment_id'],pages_sha256=r['pages_sha256'])
+ saved=read(verification_path,{})
+ verified=[u for u in saved.get('verified_urls',[]) if u in expected] if all(saved.get(k)==v for k,v in verification_key.items()) else []
+ verified=list(dict.fromkeys(verified));verified_set=set(verified)
+ receipt(day,state='verifying',batch_live_verified_count=len(verified))
  def verify_page(p):
   body=live_bytes(opener,p['url'])
   assert hashlib.sha256(body).hexdigest()==p['sha256'],'Live page differs from validated page: '+p['url']
   return p['url']
- verified=[]
  with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
-  for url in pool.map(verify_page,m['pages']):
+  for url in pool.map(verify_page,[p for p in m['pages'] if p['url'] not in verified_set]):
    verified.append(url)
-   if len(verified)%50==0:receipt(day,state='verifying',batch_live_verified_count=len(verified))
+   if len(verified)%25==0:
+    atomic(verification_path,{**verification_key,'verified_urls':verified,'checked_at':now()})
+    receipt(day,state='verifying',batch_live_verified_count=len(verified))
+ atomic(verification_path,{**verification_key,'verified_urls':verified,'checked_at':now()})
  c=db()
  with c:
   for page in m['pages']:
@@ -206,7 +216,7 @@ def publish(day,immediate=False):
  total=c.execute('select count(*) from keywords where day=? and status="published"',(day,)).fetchone()[0]
  assert total==r.get('published_count',0)+batch_target,'Published inventory does not match exact batch'
  capacity();rounds=r.get('rounds',[])+[dict(sequence=r.get('batch_sequence',1),published_count=batch_target,live_verified_count=len(verified),pages_path=str(manifest),pages_sha256=r['pages_sha256'],commit=r['commit'],deployment_id=r['prepared_deployment_id'],published_at=now())]
- return receipt(day,state='published' if total==cfg['target'] else 'published_partial',published_count=total,generated_count=total,validated_count=total,live_verified_count=sum(x['live_verified_count'] for x in rounds),shortfall=cfg['target']-total,ready_for_promotion=False,rounds=rounds,keyword_pool=counts(),blockers=[] if total==cfg['target'] else [dict(type='daily_target_shortfall',count=cfg['target']-total)],live_verification=dict(sitemap_url=ORIGIN+'/sitemap.xml',batch_covered=len(expected),total_urls=len(urls),sample_urls=[verified[0],verified[len(verified)//2],verified[-1]],deployment_id=r['prepared_deployment_id'],verified_at=now()))
+ return receipt(day,state='published' if total==cfg['target'] else 'published_partial',published_count=total,generated_count=total,validated_count=total,live_verified_count=sum(x['live_verified_count'] for x in rounds),batch_live_verified_count=len(verified),shortfall=cfg['target']-total,ready_for_promotion=False,rounds=rounds,keyword_pool=counts(),blockers=[] if total==cfg['target'] else [dict(type='daily_target_shortfall',count=cfg['target']-total)],live_verification=dict(sitemap_url=ORIGIN+'/sitemap.xml',batch_covered=len(expected),total_urls=len(urls),sample_urls=[verified[0],verified[len(verified)//2],verified[-1]],deployment_id=r['prepared_deployment_id'],verified_at=now()))
 
 def tick():
  cfg=config();heartbeat()

@@ -24,6 +24,12 @@ class InputBoundary(unittest.TestCase):
   c=k.db();c.execute('update keywords set status="reserved",day="2026-11-24"');c.commit();self.assertEqual(k.ingest()['existing_preserved'],1);self.assertEqual(c.execute('select status from keywords').fetchone()[0],'reserved')
  def test_strict_thresholds_and_normalization(self):
   self.rows=[self.row(),self.row(' Ｔennis   SERVE '),self.row('other',volume='100'),self.row('other2',kd='30'),self.row('other3',volume='NaN')];self.write();k.bind(self.pool,self.manifest);r=k.ingest();self.assertEqual(r['added'],1);self.assertEqual(r['rejected'],3);self.assertEqual(r['existing_preserved'],1)
+ def test_http_original_upgrades_transport_without_losing_provenance(self):
+  row=self.row();row['URL']='http://example.com:80/tennis-serve?q=original';self.rows=[row];self.write();k.bind(self.pool,self.manifest)
+  self.assertEqual(k.ingest()['added'],1);r=dict(k.db().execute('select * from keywords').fetchone())
+  self.assertEqual(r['evidence_url'],'https://example.com/tennis-serve?q=original');self.assertEqual(r['source_sha256'],common.sha(self.original));self.assertEqual(r['status'],'candidate')
+  for unsafe in ['http://user:pass@example.com/x','http://example.com:8080/x','file:///etc/passwd']:
+   with self.assertRaises(ValueError):k.url(unsafe)
  def test_original_hash_tamper_rejected(self):
   self.rows=[self.row()];self.write();k.bind(self.pool,self.manifest);self.original.write_text('modified')
   with self.assertRaises(ValueError):k.ingest()
