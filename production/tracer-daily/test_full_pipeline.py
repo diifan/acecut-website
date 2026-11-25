@@ -6,6 +6,7 @@ from pathlib import Path
 from contextlib import ExitStack
 from unittest.mock import patch
 import common,keyword_input,source_cache,content_engine,executor
+import public_player_records,harvest_supplemental,supplemental_evidence,tennis_records,equipment_profiles
 class FullBuild(unittest.TestCase):
  def test_2000_page_prepare_publish_fixture(self):self.exercise()
  def test_incremental_779_then_1221_keeps_daily_goal_and_previous_pages(self):self.exercise(779)
@@ -20,7 +21,7 @@ class FullBuild(unittest.TestCase):
    cmd('git','config','user.email','fixture@example.invalid',cwd=work);cmd('git','config','user.name','AceCut fixture',cwd=work)
    shutil.copytree(script_root,work/'production/tracer-daily',dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__'))
    for name in ['tracer-guides.css','tracer-guides.js']:shutil.copy2(real/'public'/name,work/'public'/name)
-   for module in [common,keyword_input,source_cache,content_engine,executor]:
+   for module in [common,keyword_input,source_cache,content_engine,executor,public_player_records,harvest_supplemental,supplemental_evidence,tennis_records,equipment_profiles]:
     if hasattr(module,'HOME'):stack.enter_context(patch.object(module,'HOME',runtime))
     if hasattr(module,'WORK'):stack.enter_context(patch.object(module,'WORK',work))
    cfg=dict(enabled=True,target=2000,hour=12,minute=30,prepare_hour=13,prepare_minute=0,timezone='Asia/Shanghai');common.atomic(runtime/'config.json',cfg)

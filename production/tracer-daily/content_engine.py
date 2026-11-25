@@ -92,6 +92,7 @@ def render_equipment(row,evidence,profile):
 def render_record(row,record):
  name=record['name'];path='/tennis-tracer/'+slug(row);kind=record['kind']
  if record.get('score_only'):return render_match_score(row,record)
+ if record.get('public_bio'):return render_public_player(row,record)
  is_match=kind=='match_record';title=name+(' — '+record['match_date']+' match statistics' if is_match else ' — tennis profile and ranking snapshot')
  body='<nav><a href="/tennis-tracer">Tennis reference guides</a></nav><article data-page-type="'+kind+'"><h1>'+E(title)+'</h1>'
  if is_match:
@@ -128,3 +129,13 @@ def render_match_score(row,record):
  body+='</ol><p>The set score records games, while a tie-break score records points within that tie-break. Seed numbers beside player names are not included. A result alone does not establish serve accuracy, rally length or why a player won a point; those statistics are not supplied here.</p></section>'
  body+='<section><h2>Source and recording notes</h2><p><a href="'+E(record['source_url'],quote=True)+'">View the original completed-match scoreboard</a>. Checked '+E(record['checked_at'][:10])+'. The event and date identify this meeting; other meetings between these players may have different results.</p><p>For your own match recording, keep the set and game count alongside your clip notes. <a href="/try-tracer">AceCut’s editing tool</a> works with footage you own or may edit; it does not provide footage of this match or calculate this scoreboard.</p></section></article>'
  return shell(title,'Completed match result for '+record['name']+' on '+record['match_date']+', with separate set and tie-break scores and the original source.','/tennis-tracer/'+slug(row),body)
+
+
+def render_public_player(row,record):
+ name=record['name'];title=name+' — tennis player reference'
+ body='<nav><a href="/tennis-tracer">Tennis reference guides</a></nav><article data-page-type="player_record"><h1>'+E(title)+'</h1><p class="guide-intro">A dated reference for '+E(name)+', based on the public Wikidata entity '+E(record['qid'])+'. Checked '+E(record['checked_at'][:10])+'.</p>'
+ body+='<section><h2>Public player facts</h2><table style="width:100%;table-layout:fixed;overflow-wrap:anywhere"><thead><tr><th scope="col">Field</th><th scope="col">Listed value</th></tr></thead><tbody>'
+ for fact in record['facts']:body+='<tr><th scope="row">'+E(fact['label'])+'</th><td>'+E(fact['value'])+'</td></tr>'
+ body+='</tbody></table></section><section><h2>Interpret the record</h2><p>The birth date is included only when the source specifies a full calendar date. Birthplace and citizenship describe different things; citizenship entries may include historical countries and should not be read as a claim about present residence. Height, when listed, retains the source unit.</p><p>This reference does not provide live rankings, career win totals, current form, match predictions or player footage. Shared names and initials can refer to different people; use the full name and birth date when comparing another record.</p></section>'
+ body+='<section><h2>Sources and updates</h2><p><a href="'+E(record['human_source_url'],quote=True)+'">View '+E(name)+' on Wikidata</a>, including the statement references and revision history. <a href="'+E(record['source_url'],quote=True)+'">Open the structured query used for this snapshot</a>. Wikidata is a collaboratively maintained knowledge base; consult the linked statement references for further verification and later corrections.</p><p>For tennis footage you own or may edit, <a href="/try-tracer">AceCut’s optional video editing tool</a> can add visual ball trails. It does not generate these biographical facts or imply endorsement by the player.</p></section></article>'
+ return shell(title,'Source-attributed tennis reference for '+name+', including birth details and other explicitly listed public facts.','/tennis-tracer/'+slug(row),body)

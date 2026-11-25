@@ -118,6 +118,9 @@ def aligned(word,record):
  return bool(wanted and surname in wanted and matches)
 
 def grounded(record,data):
+ if record.get('public_bio'):
+  from public_player_records import grounded as public_grounded
+  return public_grounded(record,data)
  if record['source_sha256']!=data.get('body_sha256'):return False
  if record.get('score_only'):
   current=score_record(data,record['source_url'],record['evidence_path'])
@@ -134,12 +137,18 @@ def grounded(record,data):
 _cache=None;_stamp=None;_sources={}
 def registry():
  global _cache,_stamp,_sources
- path=HOME/'tennis-records.json';stamp=path.stat().st_mtime_ns if path.exists() else None
+ path=HOME/'tennis-records.json';extra=HOME/'supplemental-player-records.json';stamp=(path.stat().st_mtime_ns if path.exists() else None,extra.stat().st_mtime_ns if extra.exists() else None)
  if _cache is None or stamp!=_stamp:
-  _cache=read(path,{'records':{},'keywords':{}});_stamp=stamp;_sources={}
+  _cache=read(path,{'records':{},'keywords':{}});supplement=read(extra,{})
+  for field in ('keywords','records'):_cache.setdefault(field,{}).update(supplement.get(field,{}))
+  _stamp=stamp;_sources={}
   for value in _cache.get('records',{}).values():_sources.setdefault(value['source_url'],[]).append(value)
  return _cache
 def for_row(row):
  data=registry();ident=data.get('keywords',{}).get(' '.join(row['keyword'].casefold().split()));record=data.get('records',{}).get(ident)
- if record and row.get('evidence_url','')==record['source_url'] and aligned(row['keyword'],record):return record
- return next((r for r in _sources.get(row.get('evidence_url',''),[]) if aligned(row['keyword'],r)),None)
+ if record and row.get('evidence_url','')==record['source_url'] and aligned(row['keyword'],record):
+  if record.get('public_bio'):
+   from public_player_records import identity_supported
+   return record if identity_supported(row['keyword'],record,row.get('demand_url') or row['evidence_url']) else None
+  return record
+ return next((r for r in _sources.get(row.get('evidence_url',''),[]) if not r.get('public_bio') and aligned(row['keyword'],r)),None)
