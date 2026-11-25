@@ -75,7 +75,12 @@ def prepare(day,collect=True):
  if len(rows)<target:
   rows += [dict(x) for x in c.execute('select * from keywords where status="verified" order by rowid limit ?',(target-len(rows),))]
   if len(rows)<target:
-   receipt(day,state='insufficient_keywords',target=target,keyword_pool=counts(),blockers=([dict(type='source_quota_blocked',code=-32107,detail='Controller confirmed Semrush Report limits exceeded; producer owns six-hour cooldown')] if counts()['candidate_count']==0 else [])+[dict(type='candidate_shortfall',count=max(0,target-sum(counts()['status_counts'].get(s,0) for s in ('verified','candidate','fetch_failed')))),dict(type='fetch_pending',count=counts()['fetch_pending_count']),dict(type='verified_shortfall',count=target-len(rows))]);return
+   pool=counts();states=pool['status_counts'];backlog=sum(states.get(s,0) for s in ('needs_template','needs_review','freshness_required','specialist_review'))
+   blockers=[dict(type='verified_shortfall',count=target-len(rows)),dict(type='content_processing_backlog',count=backlog,detail='Raw keywords are present; unsupported templates, source review and dated evidence must be resolved before publication.'),dict(type='fetch_pending',count=pool['fetch_pending_count'])]
+   gate=read(Path('/data/swi-algo/Swi-App-Factory/Hoopcut/production/keyword-expansion/provider-quota.json'),{})
+   if gate.get('quota_blocked_day')==datetime.datetime.now(ZoneInfo(cfg['timezone'])).date().isoformat():
+    blockers.append(dict(type='provider_daily_quota_exhausted',evidence=gate.get('evidence'),detail='dash.3ue.co explicitly reported daily quota exhausted; resume saved partitions after reset.'))
+   receipt(day,state='insufficient_keywords',target=target,keyword_pool=pool,blockers=blockers);return
   with c:
    for row in rows:c.execute('update keywords set status="reserved",day=? where normalized=? and status="verified"',(day,row['normalized']))
  assert len(rows)==target,'Reserved target differs from current config'
@@ -185,9 +190,10 @@ def tick():
   r=attempt(today) or read(HOME/(today+'-receipt.json'),{})
   if r.get('ready_for_promotion'):publish(today,immediate=True)
   return
- if not cutoff and r.get('state') not in ('prepared','published'):attempt(today)
+ if r.get('state') not in ('prepared','published'):
+  r=attempt(today) or read(HOME/(today+'-receipt.json'),{})
  if cutoff and r.get('ready_for_promotion') and r.get('state')!='published':publish(today)
- if (local.hour,local.minute)>=(cfg['prepare_hour'],cfg['prepare_minute']):attempt((local.date()+datetime.timedelta(days=1)).isoformat())
+ if r.get('state') in ('prepared','published') and (local.hour,local.minute)>=(cfg['prepare_hour'],cfg['prepare_minute']):attempt((local.date()+datetime.timedelta(days=1)).isoformat())
 
 def main():
  p=argparse.ArgumentParser();p.add_argument('action',choices=['bind','prepare','publish','tick']);p.add_argument('--day');p.add_argument('--pool',type=Path);p.add_argument('--manifest',type=Path);p.add_argument('--existing-sources',action='store_true');p.add_argument('--immediate',action='store_true');a=p.parse_args()

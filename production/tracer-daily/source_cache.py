@@ -8,9 +8,11 @@ from editorial_topics import topic,supported
 from equipment_profiles import for_row,grounded
 from tennis_records import for_row as record_for_row,grounded as record_grounded
 class Text(HTMLParser):
- def __init__(self):super().__init__();self.skip=0;self.title=False;self.head=False;self.parts=[];self.titles=[];self.headings=[];self.sections=[];self.section_heading='';self.section_parts=[];self.heading_parts=[];self.tables=[];self.table=None;self.table_row=None;self.cell=None
+ def __init__(self):super().__init__();self.skip=0;self.title=False;self.head=False;self.parts=[];self.titles=[];self.headings=[];self.sections=[];self.section_heading='';self.section_parts=[];self.heading_parts=[];self.tables=[];self.table=None;self.table_row=None;self.cell=None;self.table_stack=[]
  def handle_starttag(self,tag,attrs):
-  if tag=='table':self.table={'heading':self.section_heading,'rows':[]}
+  if tag=='table':
+   self.table_stack.append((self.table,self.table_row,self.cell))
+   self.table={'heading':self.section_heading,'rows':[]};self.table_row=None;self.cell=None
   if tag=='tr' and self.table is not None:self.table_row=[]
   if tag in ('th','td') and self.table_row is not None:self.cell=[]
   if tag in ('script','style','noscript'):self.skip+=1
@@ -21,10 +23,11 @@ class Text(HTMLParser):
  def handle_endtag(self,tag):
   if tag in ('th','td') and self.cell is not None:
    self.table_row.append(' '.join(self.cell));self.cell=None
-  if tag=='tr' and self.table_row is not None:
+  if tag=='tr' and self.table_row is not None and self.table is not None:
    self.table['rows'].append(self.table_row);self.table_row=None
   if tag=='table' and self.table is not None:
-   self.tables.append(self.table);self.table=None
+   self.tables.append(self.table)
+   self.table,self.table_row,self.cell=self.table_stack.pop() if self.table_stack else (None,None,None)
   if tag in ('script','style','noscript'):self.skip=max(0,self.skip-1)
   if tag=='title':self.title=False
   if tag in ('h1','h2','h3'):self.section_heading=' '.join(self.heading_parts);self.head=False
@@ -49,7 +52,7 @@ _http=threading.local()
 
 def fetch(url,structured=False):
  path=HOME/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json');old=read(path)
- if old and old.get('http')!=200 and old.get('checked_at'):
+ if old and old.get('http')!=200 and old.get('checked_at') and not ('TypeError:' in old.get('error','') and old.get('parser_version')!=2):
   import datetime
   if (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['checked_at'])).total_seconds()<1800:return path,old
  if old and old.get('http')==200 and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
@@ -85,7 +88,10 @@ def fetch(url,structured=False):
       except (ValueError,SyntaxError):pass
    data=dict(source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
    break
-  except Exception as e:data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
+  except Exception as e:
+   data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
+   if isinstance(e,requests.HTTPError) and e.response is not None and e.response.status_code==429:break
+ data['parser_version']=2
  atomic(path,data);return path,data
 EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)
 FAMILIES=[('drop_shot',r'\bdrop shots?\b'),('lob',r'\b(?:lobs?|lobbing)\b'),('overhead',r'\boverhead(?: smash)?\b'),('recording',r'\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\b'),('serve',r'\b(?:serves?|serving|aces?|toss)\b'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]

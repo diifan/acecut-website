@@ -20,7 +20,7 @@ def _harvest(limit=12000,network_limit=500,home=None):
  network=set();locks=collections.defaultdict(lambda:threading.BoundedSemaphore(8))
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
-  if cached.get('checked_at') and cached.get('http')!=200 and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
+  if cached.get('checked_at') and cached.get('http')!=200 and not ('TypeError:' in cached.get('error','') and cached.get('parser_version')!=2) and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
   if not (cached.get('http')==200 and 'player_fields' in cached and 'tables' in cached) and len(network)<network_limit:network.add(url)
  def load(url):
   if url in network:
