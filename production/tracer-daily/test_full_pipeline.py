@@ -7,7 +7,9 @@ from contextlib import ExitStack
 from unittest.mock import patch
 import common,keyword_input,source_cache,content_engine,executor
 class FullBuild(unittest.TestCase):
- def test_2000_page_prepare_publish_fixture(self):
+ def test_2000_page_prepare_publish_fixture(self):self.exercise()
+ def test_incremental_779_then_1221_keeps_daily_goal_and_previous_pages(self):self.exercise(779)
+ def exercise(self,first_size=None):
   real=common.WORK;script_root=Path(__file__).parent
   with tempfile.TemporaryDirectory(prefix='acecut-fixture-') as temp,ExitStack() as stack:
    root=Path(temp);work=root/'website';runtime=root/'runtime';runtime.mkdir();remote=root/'origin.git';day='2099-01-01'
@@ -31,28 +33,40 @@ class FullBuild(unittest.TestCase):
    pool=root/'keywords.csv';shutil.copy2(original,pool);manifest=root/'manifest.json';common.atomic(manifest,dict(app='acecut',sport='tennis',sources=[dict(path=str(original),sha256=common.sha(original),rows=2000)]));keyword_input.bind(pool,manifest)
    stack.enter_context(patch.object(source_cache,'fetch',side_effect=lambda u:evidence[u]));executor.refresh(day)
    self.assertEqual(keyword_input.counts()['verified_available'],2000)
-   promoted={'yes':False};actual_run=common.run
+   if first_size:
+    c=keyword_input.db();c.execute('update keywords set status="needs_review" where rowid>?',(first_size,));c.commit()
+   promoted={'yes':False,'alias':'dpl_fixture_baseline','latest':None,'deployments':{}};actual_run=common.run
    def fake_run(args,*a,**kw):
     if args[0]==common.CLI:
-     if args[1]=='deploy':return json.dumps({'id':'dpl_fixture','url':'fixture.invalid'})
-     if args[1]=='promote':promoted['yes']=True;return '{}'
+     if args[1]=='deploy':
+      ident='dpl_fixture_'+str(len(promoted['deployments'])+1);promoted['latest']=ident;promoted['deployments'][ident]=cmd('git','rev-parse','HEAD',cwd=work);return json.dumps({'id':ident,'url':'fixture.invalid'})
+     if args[1]=='promote':promoted['yes']=True;promoted['alias']=promoted['latest'];return '{}'
      raise AssertionError('Unmocked Vercel operation')
     return actual_run(args,*a,**kw)
    stack.enter_context(patch.object(executor,'run',side_effect=fake_run))
    def api(path):
-    if path.startswith('/v4/aliases/'):return {'deploymentId':'dpl_fixture' if promoted['yes'] else 'dpl_fixture_baseline'}
+    if path.startswith('/v4/aliases/'):return {'deploymentId':promoted['alias']}
     if path.startswith('/v6/deployments'):return {'deployments':[]}
-    if path=='/v13/deployments/dpl_fixture':return dict(id='dpl_fixture',url='fixture.invalid',projectId=common.PROJECT,readyState='READY',target='production',meta={'swieCommit':cmd('git','rev-parse','HEAD',cwd=work)})
+    if path.startswith('/v13/deployments/'):
+     ident=path.rsplit('/',1)[-1];return dict(id=ident,url='fixture.invalid',projectId=common.PROJECT,readyState='READY',target='production',meta={'swieCommit':promoted['deployments'][ident]})
     raise AssertionError('Unmocked API operation: '+path)
    stack.enter_context(patch.object(executor,'api',side_effect=api));r=executor.prepare(day,collect=False)
-   self.assertEqual(r['state'],'prepared');self.assertEqual(r['validated_count'],2000);self.assertEqual(r['published_count'],0)
+   self.assertEqual(r['state'],'prepared');self.assertEqual(r['validated_count'],first_size or 2000);self.assertEqual(r['published_count'],0);self.assertEqual(r['target'],2000)
    class Opener:
     def open(self,url,timeout=None):
      path=url.removeprefix(common.ORIGIN+'/');file=work/'dist'/path
      if not path.endswith('.xml'):file=file.with_suffix('.html')
      return io.BytesIO(file.read_bytes())
    stack.enter_context(patch.object(executor.urllib.request,'build_opener',return_value=Opener()));r=executor.publish(day,immediate=True)
-   self.assertEqual(r['state'],'published');self.assertEqual(r['published_count'],2000);self.assertEqual(r['live_verification']['batch_covered'],2000)
+   if first_size:
+    self.assertEqual(r['state'],'published_partial');self.assertEqual(r['published_count'],first_size);self.assertEqual(r['shortfall'],2000-first_size);self.assertFalse(r['ready_for_promotion'])
+    original_manifest=Path(r['pages_path']);original_bytes=original_manifest.read_bytes();first_hashes={x['url']:x['sha256'] for x in common.read(original_manifest)['pages']}
+    c=keyword_input.db();c.execute('update keywords set status="verified" where status="needs_review"');c.commit()
+    r=executor.prepare(day,collect=False);self.assertEqual(r['batch_target'],2000-first_size);self.assertEqual(r['target'],2000)
+    self.assertEqual(original_manifest.read_bytes(),original_bytes)
+    for url,digest in first_hashes.items():self.assertEqual(common.sha(work/'public'/(url.removeprefix(common.ORIGIN+'/')+'.html')),digest)
+    r=executor.publish(day,immediate=True);self.assertEqual(len(r['rounds']),2);self.assertEqual(r['live_verified_count'],2000)
+   self.assertEqual(r['state'],'published');self.assertEqual(r['published_count'],2000);self.assertEqual(r['live_verification']['batch_covered'],2000-(first_size or 0))
    self.assertEqual(executor.capacity()['verified_available'],0)
    print('FIXTURE ONLY: 2000 generated, Bun built, validated; local Git push and simulated Vercel/online verification passed. Production published count unchanged.')
 class Schedule(unittest.TestCase):
