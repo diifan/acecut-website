@@ -55,7 +55,7 @@ def fetch(url,structured=False):
  if old and old.get('http')!=200 and old.get('checked_at') and not ('TypeError:' in old.get('error','') and old.get('parser_version')!=2):
   import datetime
   if (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['checked_at'])).total_seconds()<1800:return path,old
- if old and old.get('http')==200 and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
+ if old and old.get('http')==200 and (structured!='score' or 'match_score' in old) and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
  host=urllib.parse.urlsplit(url).hostname or ''
  backoff_path=HOME/'source-host-backoff'/(hashlib.sha256(host.encode()).hexdigest()+'.json')
  backoff=read(backoff_path,{})
@@ -93,7 +93,9 @@ def fetch(url,structured=False):
        value=ast.literal_eval(values[0].strip())
        if isinstance(value,(str,int,float)):player_fields[field]={'value':value,'literal':values[0].strip()}
       except (ValueError,SyntaxError):pass
-   data=dict(source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
+   from match_score import extract_score
+   match_score=extract_score(body,url)
+   data=dict(match_score=match_score,source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
    break
   except Exception as e:
    data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())

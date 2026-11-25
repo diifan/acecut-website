@@ -65,8 +65,26 @@ def _extract(data,url,path):
  identity=hashlib.sha256((fold(name)+'|'+dob).encode()).hexdigest()[:20]
  return {**base,'id':identity,'kind':'player_record','name':name,'birth_date':dob,'facts':facts}
 
+def score_record(data,url,path):
+ score=data.get('match_score')
+ if data.get('http')!=200 or not score or score.get('source_url')!=url:return None
+ parts=data.get('title','').split(' | ')[0].split(' · ');names=parts[0].split(' vs ')
+ if len(names)!=2 or [fold(n) for n in names]!=[fold(n) for n in score['players']]:return None
+ day=date(score['start_date'][:10]);found=re.search(r'-(\d{4}-\d{2}-\d{2})$',urlsplit(url).path)
+ if not day or not found or found[1]!=day or day>data['checked_at'][:10]:return None
+ for name,row in zip(names,score['rows']):
+  have=tokens(name);surname=re.findall(r'[a-z]+',fold(name))[-1];wanted=tokens(row['label'])
+  if surname not in wanted or not all(t in have or len(t)==1 and any(x.startswith(t) for x in have-{surname}) for t in wanted):return None
+ facts=[]
+ for i,(left,right) in enumerate(zip(score['rows'][0]['sets'],score['rows'][1]['sets']),1):
+  facts.append({'label':'Set '+str(i),'left':str(left['games']),'right':str(right['games']),'score_set':i-1})
+  if left['tiebreak'] is not None or right['tiebreak'] is not None:
+   facts.append({'label':'Set '+str(i)+' tie-break points','left':str(left['tiebreak']) if left['tiebreak'] is not None else 'Not listed','right':str(right['tiebreak']) if right['tiebreak'] is not None else 'Not listed','score_set':i-1})
+ event=' · '.join(parts[1:]);identity=hashlib.sha256((day+'|'+'|'.join(sorted(fold(n) for n in names))+'|'+event).encode()).hexdigest()[:20]
+ return {'source_url':url,'evidence_path':str(path),'source_sha256':data['body_sha256'],'checked_at':data['checked_at'],'id':identity,'kind':'match_record','name':parts[0],'players':names,'event':event,'match_date':day,'facts':facts,'score_only':True,'score_evidence':score}
+
 def extract(data,url,path):
- record=_extract(data,url,path)
+ record=_extract(data,url,path) or score_record(data,url,path)
  if record:
   record['canonical_id']=record['id'];record['id']=hashlib.sha256((record['canonical_id']+'|'+url).encode()).hexdigest()[:20]
  return record
@@ -101,6 +119,9 @@ def aligned(word,record):
 
 def grounded(record,data):
  if record['source_sha256']!=data.get('body_sha256'):return False
+ if record.get('score_only'):
+  current=score_record(data,record['source_url'],record['evidence_path'])
+  return bool(current and record.get('score_evidence')==data.get('match_score') and current['facts']==record['facts'] and current['players']==record['players'] and current['match_date']==record['match_date'])
  for fact in record['facts']:
   if 'variable' in fact:
    if data.get('player_fields',{}).get(fact['variable'])!={'value':fact['raw_value'],'literal':fact['literal']}:return False

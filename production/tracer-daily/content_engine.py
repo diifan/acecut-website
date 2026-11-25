@@ -90,6 +90,7 @@ def render_equipment(row,evidence,profile):
 
 def render_record(row,record):
  name=record['name'];path='/tennis-tracer/'+slug(row);kind=record['kind']
+ if record.get('score_only'):return render_match_score(row,record)
  is_match=kind=='match_record';title=name+(' — '+record['match_date']+' match statistics' if is_match else ' — tennis profile and ranking snapshot')
  body='<nav><a href="/tennis-tracer">Tennis reference guides</a></nav><article data-page-type="'+kind+'"><h1>'+E(title)+'</h1>'
  if is_match:
@@ -110,3 +111,19 @@ def render_record(row,record):
   body+='</section>'
  body+='<section><h2>Source and update scope</h2><p><a href="'+E(record['source_url'],quote=True)+'">Open the original '+('match record' if is_match else 'player reference')+'</a>. Checked '+E(record['checked_at'][:10])+'. Consult the source for subsequent updates. This page does not supply player footage or imply endorsement by the player or publisher.</p><p>If you record tennis yourself, <a href="/try-tracer">AceCut’s optional editing tool</a> can be used with footage you own or may edit. It does not produce the statistics shown here.</p></section></article>'
  return shell(title,'Dated, source-attributed '+('match statistics for ' if is_match else 'tennis profile for ')+name+'. Includes the source and snapshot date.',path,body)
+
+
+def render_match_score(row,record):
+ title=record['name']+' — '+record['match_date']+' match result'
+ body='<nav><a href="/tennis-tracer">Tennis reference guides</a></nav><article data-page-type="match_record"><h1>'+E(title)+'</h1>'
+ body+='<p class="guide-intro">'+E(record['event'])+'. The source lists this match as completed. The date below follows its UTC start timestamp, '+E(record['score_evidence']['start_date'])+'. This historical result is not a live score or prediction.</p>'
+ body+='<section><h2>Reported set scores</h2><table style="width:100%;table-layout:fixed;overflow-wrap:anywhere"><thead><tr><th>Set</th><th>'+E(record['players'][0])+'</th><th>'+E(record['players'][1])+'</th></tr></thead><tbody>'
+ for fact in record['facts']:body+='<tr><th scope="row">'+E(fact['label'])+'</th><td>'+E(fact['left'])+'</td><td>'+E(fact['right'])+'</td></tr>'
+ body+='</tbody></table></section><section><h2>Read the result</h2><ol>'
+ for i,(a,b) in enumerate(zip(record['score_evidence']['rows'][0]['sets'],record['score_evidence']['rows'][1]['sets']),1):
+  body+='<li>Set '+str(i)+': '+E(record['players'][0])+' recorded '+str(a['games'])+' games and '+E(record['players'][1])+' recorded '+str(b['games'])+' games.'
+  if a['tiebreak'] is not None or b['tiebreak'] is not None:body+=' The tie-break points are listed separately from games in the table.'
+  body+='</li>'
+ body+='</ol><p>The set score records games, while a tie-break score records points within that tie-break. Seed numbers beside player names are not included. A result alone does not establish serve accuracy, rally length or why a player won a point; those statistics are not supplied here.</p></section>'
+ body+='<section><h2>Source and recording notes</h2><p><a href="'+E(record['source_url'],quote=True)+'">View the original completed-match scoreboard</a>. Checked '+E(record['checked_at'][:10])+'. The event and date identify this meeting; other meetings between these players may have different results.</p><p>For your own match recording, keep the set and game count alongside your clip notes. <a href="/try-tracer">AceCut’s editing tool</a> works with footage you own or may edit; it does not provide footage of this match or calculate this scoreboard.</p></section></article>'
+ return shell(title,'Completed match result for '+record['name']+' on '+record['match_date']+', with separate set and tie-break scores and the original source.','/tennis-tracer/'+slug(row),body)

@@ -1,3 +1,4 @@
+import time
 """Bounded collection of publicly rendered player facts and completed-match data."""
 import io,argparse,collections,concurrent.futures,csv,datetime,hashlib,json,re,threading,os,fcntl
 from pathlib import Path
@@ -5,7 +6,7 @@ from urllib.parse import urlsplit
 from common import HOME,read,atomic,now
 from source_cache import fetch
 from evidence_selection import candidate_rows
-from tennis_records import extract,aligned
+from tennis_records import extract,aligned,BAD_QUERY
 
 def _harvest(limit=12000,network_limit=500,home=None):
  home=Path(home or HOME);binding=read(home/'keyword-input.json');pool=Path(binding['pool_path']);rows=candidate_rows(home);groups={}
@@ -17,14 +18,20 @@ def _harvest(limit=12000,network_limit=500,home=None):
  selected=sorted(groups,key=lambda u:(-max(float(r['volume']) for r in groups[u]),u))[:limit]
  prior=read(home/'tennis-records.json',{}).get('records',{})
  selected=list(dict.fromkeys(selected+[r['source_url'] for r in prior.values() if r['source_url'] in groups]))
+ score_urls=set()
  network=set();locks=collections.defaultdict(lambda:threading.BoundedSemaphore(8))
  for url in selected:
   cached=read(home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json'),{})
   if cached.get('checked_at') and cached.get('http')!=200 and not ('TypeError:' in cached.get('error','') and cached.get('parser_version')!=2) and (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(cached['checked_at'])).total_seconds()<1800:continue
-  if not (cached.get('http')==200 and 'player_fields' in cached and 'tables' in cached) and len(network)<network_limit:network.add(url)
+  host=urlsplit(url).hostname or ''
+  backoff=read(home/'source-host-backoff'/(hashlib.sha256(host.encode()).hexdigest()+'.json'),{})
+  if backoff.get('retry_at',0)>time.time():continue
+  needs_score=('/matches/' in url and 'match_score' not in cached and not extract(cached,url,'cached') and any(re.search(r'\bvs\b|\bversus\b',r['keyword'],re.I) and not BAD_QUERY.search(r['keyword']) for r in groups[url]))
+  if needs_score:score_urls.add(url)
+  if (needs_score or not (cached.get('http')==200 and 'player_fields' in cached and 'tables' in cached)) and len(network)<network_limit:network.add(url)
  def load(url):
   if url in network:
-   with locks[urlsplit(url).hostname]:return fetch(url,'entity')
+   with locks[urlsplit(url).hostname]:return fetch(url,'score' if url in score_urls else 'entity')
   path=home/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json');return path,read(path,{'error':'Pending bounded source harvest'})
  records={};words={};receipts=[];started=now()
  with concurrent.futures.ThreadPoolExecutor(max_workers=12) as ex:
