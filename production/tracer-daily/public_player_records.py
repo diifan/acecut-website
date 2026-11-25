@@ -14,7 +14,7 @@ def player(rows,source_url,path,digest,checked):
  qid=rows[0]['person']['value'].rsplit('/',1)[-1]
  if not re.fullmatch('Q[0-9]+',qid):return None
  facts=[{'label':'Birth Date','value':birth,'wd_field':'birth'},{'label':'Occupation','value':'Tennis player','wd_field':'occupation'}]
- for field,label in [('countryLabel','Citizenship entries'),('placeLabel','Birthplace')]:
+ for field,label in [('countryLabel','Citizenship entries'),('placeLabel','Birthplace'),('sportCountryLabel','Country represented in sport')]:
   values=sorted({r[field]['value'] for r in rows if field in r and not re.fullmatch('Q[0-9]+',r[field]['value'])})
   if values and (field!='placeLabel' or len(values)==1):facts.append({'label':label,'value':'; '.join(values),'wd_field':field})
  heights={(r['height']['value'],r.get('unitLabel',{}).get('value')) for r in rows if 'height' in r}
@@ -23,7 +23,10 @@ def player(rows,source_url,path,digest,checked):
   try:valid=unit in ('metre','centimetre') and (0.8<=float(value)<=2.6 if unit=='metre' else 80<=float(value)<=260)
   except ValueError:valid=False
   if valid:facts.append({'label':'Height (source units)','value':value+' '+unit,'wd_field':'height'})
- if len(facts)<4 or not any(f['wd_field']=='countryLabel' for f in facts):return None
+ for field,label in [('atp','ATP player identifier'),('wta','WTA player identifier')]:
+  ids={r[field]['value'] for r in rows if field in r}
+  if len(ids)==1 and re.fullmatch('[A-Za-z0-9-]+',next(iter(ids))):facts.append({'label':label,'value':next(iter(ids)),'wd_field':field})
+ if len(facts)<4 or not any(f['wd_field'] in ('countryLabel','sportCountryLabel') for f in facts):return None
  canonical=hashlib.sha256((fold(name)+'|'+birth).encode()).hexdigest()[:20]
  return {'id':hashlib.sha256((canonical+'|'+source_url).encode()).hexdigest()[:20],'canonical_id':canonical,'kind':'player_record','public_bio':True,'name':name,'birth_date':birth,'qid':qid,'facts':facts,'source_url':source_url,'human_source_url':'https://www.wikidata.org/wiki/'+qid,'source_sha256':digest,'evidence_path':str(path),'checked_at':checked}
 
@@ -67,17 +70,21 @@ def harvest(index_path):
  for qid,rows in groups.items():
   r=player(rows,source_url,path,digest,checked)
   if r:records[r['id']]=r;surnames[re.findall('[a-z]+',fold(r['name']))[-1]].append(r)
+ previous=read(HOME/'supplemental-player-records.json',{})
  binding=read(HOME/'keyword-input.json');index=originals(binding);c=db();words={};selected={};ambiguous=[]
  # Use birth-date + surname + given initial to consolidate spelling/name variants
  # against already grounded records, without claiming every name is globally unique.
  from tennis_records import for_row
  occupied={}
  for row in c.execute('select * from keywords where status in ("published","reserved","verified")'):
-  r=for_row(dict(row))
+  row=dict(row);r=for_row(row)
+  if r and r.get('public_bio') and row['status'] in ('published','reserved'):
+   selected[r['id']]=r;words[row['normalized']]=r['id']
   if r and r['kind']=='player_record':
    parts=re.findall('[a-z]+',fold(r['name']));occupied[(r['birth_date'],parts[-1],parts[0][0])]=r['canonical_id']
  for row in c.execute('select * from keywords where status in ("needs_review","needs_template","fetch_failed","freshness_required","candidate","verified","reserved","published")'):
   row=dict(row)
+  if row['normalized'] in words:continue
   if not demand_proven(row,index):continue
   candidates={r['qid']:r for t in tokens(row['keyword']) for r in surnames.get(t,[]) if identity_supported(row['keyword'],r,row.get('demand_url') or row['evidence_url'])}
   if len(candidates)!=1:
@@ -88,8 +95,9 @@ def harvest(index_path):
   if existing and existing!=r['canonical_id']:continue
   selected[r['id']]=r;words[row['normalized']]=r['id']
  c.close()
- source_copy=HOME/'public-player-index.json';temporary=source_copy.with_suffix('.tmp');temporary.write_bytes(raw);temporary.replace(source_copy)
- cache={'source_url':source_url,'http':200,'source_format':'wikidata_tennis_players_v1','body_sha256':digest,'checked_at':checked,'source_snapshot_path':str(source_copy),'representation':'Normalized JSON query response with source URL retained; hash binds saved input bytes','wikidata_players':{r['qid']:groups[r['qid']] for r in selected.values()},'text':'Wikidata tennis player facts','title':'Wikidata tennis player query'}
+ source_copy=HOME/'source-snapshots'/('public-players-'+digest+'.json');source_copy.parent.mkdir(exist_ok=True);source_copy.write_bytes(raw)
+ latest=HOME/'public-player-latest.json';temporary=latest.with_suffix('.tmp');temporary.write_bytes(raw);temporary.replace(latest)
+ cache={'source_url':source_url,'http':200,'source_format':'wikidata_tennis_players_v1','body_sha256':digest,'checked_at':checked,'source_snapshot_path':str(source_copy),'representation':'Normalized JSON query response with source URL retained; hash binds saved input bytes','wikidata_players':{r['qid']:groups[r['qid']] for r in selected.values() if r['source_url']==source_url},'text':'Wikidata tennis player facts','title':'Wikidata tennis player query'}
  atomic(path,cache);result={'created_at':checked,'records':selected,'keywords':words,'ambiguous_keywords':ambiguous,'source_url':source_url,'source_rows':len(bindings),'license':'CC0 structured data'};atomic(HOME/'supplemental-player-records.json',result)
  print(json.dumps({'matched_keywords':len(words),'player_identities':len(selected),'ambiguous':len(ambiguous)}),flush=True);return result
 
@@ -98,7 +106,8 @@ if __name__=='__main__':
  harvest(sys.argv[1])
 
 def ensure():
- source=HOME/'public-player-index.json'
+ source=HOME/'public-player-latest.json'
+ if not source.is_file():source=HOME/'public-player-index.json'
  if not source.is_file():return
  binding=read(HOME/'keyword-input.json',{})
  fingerprint=hashlib.sha256(json.dumps(binding,sort_keys=True).encode()).hexdigest()
