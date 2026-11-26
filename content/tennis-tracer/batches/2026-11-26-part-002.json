@@ -1,0 +1,55 @@
+{
+  "day": "2026-11-26",
+  "target": 3,
+  "daily_target": 2000,
+  "sequence": 2,
+  "source_kind": "semrush_keywords",
+  "base_commit": "f6c161aae091ebe11308cd7a5aeef91dbb228055",
+  "pages": [
+    {
+      "keyword": "shnaider vs chwalinska",
+      "normalized": "shnaider vs chwalinska",
+      "url": "https://acecut.goswie.com/tennis-tracer/shnaider-vs-chwalinska",
+      "evidence_url": "https://www.tennis.com/tournaments/cincinnati-open/matches/d-shnaider-vs-m-chwalinska-2026-08-17",
+      "demand_url": "https://www.tennis.com/tournaments/cincinnati-open/matches/d-shnaider-vs-m-chwalinska-2026-08-17",
+      "volume": 590.0,
+      "kd": 16.0,
+      "metric_timestamp": "2026-11-24",
+      "source_sha256": "994a4b5876b484da102f18144f80486a4762d61615c36cfa990f976dd4f911fe",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261126T044501Z/exports/tennis.com-organic.Positions-us-20261124-2026-11-26T04_44_59Z-kd0-30.csv.partial",
+      "sha256": "d7f524e2f615ca269eb63ea05ad6b2972d7e3b42a4eaea12b524c0327a36e971",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/eb00b9527b1242edb4c3a97574f80851d2b8a46d7cb340d54731d7639d50c970.json",
+      "evidence_sha256": "8cb24dac8f0c3797fee59781d8b51bbdb070ded97608a490a544a695e978345c"
+    },
+    {
+      "keyword": "emilio nava vs gustavo heide",
+      "normalized": "emilio nava vs gustavo heide",
+      "url": "https://acecut.goswie.com/tennis-tracer/emilio-nava-vs-gustavo-heide",
+      "evidence_url": "https://www.tennis.com/tournaments/uruguay-open/matches/g-heide-vs-e-nava-2025-11-12",
+      "demand_url": "https://www.tennis.com/tournaments/uruguay-open/matches/g-heide-vs-e-nava-2025-11-12",
+      "volume": 320.0,
+      "kd": 6.0,
+      "metric_timestamp": "2026-11-24",
+      "source_sha256": "994a4b5876b484da102f18144f80486a4762d61615c36cfa990f976dd4f911fe",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261126T044501Z/exports/tennis.com-organic.Positions-us-20261124-2026-11-26T04_44_59Z-kd0-30.csv.partial",
+      "sha256": "bad75b0cb2a44faa9ee92cf5427e8c8e1542371d38e3e591a0de8a633875b135",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/f2e10800380fc486e253af9a169700c5444428660295e0ab794272ee0ac88531.json",
+      "evidence_sha256": "41ba319898d60cb139269cafd4614fea585de897470831634349dd272b872f00"
+    },
+    {
+      "keyword": "mihalikova",
+      "normalized": "mihalikova",
+      "url": "https://acecut.goswie.com/tennis-tracer/mihalikova",
+      "evidence_url": "https://www.tennis.com/players-rankings/tereza-mihalikova",
+      "demand_url": "https://www.tennis.com/players-rankings/tereza-mihalikova",
+      "volume": 210.0,
+      "kd": 24.0,
+      "metric_timestamp": "2026-11-24",
+      "source_sha256": "994a4b5876b484da102f18144f80486a4762d61615c36cfa990f976dd4f911fe",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261126T044501Z/exports/tennis.com-organic.Positions-us-20261124-2026-11-26T04_44_59Z-kd0-30.csv.partial",
+      "sha256": "ea94a55f900ea2e8d125b6ce6ff5524abbcf31fe54af41eadd11f3f2a9a4f5e4",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/823073c297ef6808164583360e0c97aa520f341d502c0a6fec74d089de4ddafd.json",
+      "evidence_sha256": "90d62161e1f390791b9dca6dc6710374f2d08e32e89dcd5f620f3a13665ec611"
+    }
+  ]
+}
