@@ -107,8 +107,8 @@ def fetch(url,structured=False):
     break
  data['parser_version']=2
  atomic(path,data);return path,data
-EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|rackets? for sale|string tension)\b',re.I)
-FAMILIES=[('drop_shot',r'\bdrop shots?\b'),('lob',r'\b(?:lobs?|lobbing)\b'),('overhead',r'\boverhead(?: smash)?\b'),('recording',r'\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\b'),('serve',r'\b(?:serves?|serving|aces?|toss)\b'),('forehand',r'forehand'),('backhand',r'backhand'),('volley',r'volley|net play'),('rally',r'rally|rallies|baseline|groundstroke'),('spin',r'topspin|slice|spin'),('footwork',r'footwork|split step|recovery'),('practice',r'practice|drill|training|technique|swing|tennis form')]
+EXCLUDE=re.compile(r'\b(basketball|golf|pickleball|football|soccer|baseball|betting|odds|tickets|rankings?|salary|net worth|wife|husband|girlfriend|boyfriend|dance|dancing|wedding|death|obituary|restaurant|login|discount|coupon|buy|sale|price|shoes|dress|dresses|skirt|skirts|shorts|hoodie|rackets? for sale|string tension)\b',re.I)
+FAMILIES=[('drop_shot', '\\bdrop shots?\\b'), ('lob', '\\b(?:lobs?|lobbing)\\b'), ('overhead', '\\boverhead(?: smash)?\\b'), ('recording', '\\b(?:cameras?|recording|recordings|filming|videos?|highlights?|editing|tracer|ball tracking)\\b'), ('serve', '\\b(?:serves?|serving|aces?|toss)\\b'), ('forehand', 'forehand'), ('backhand', 'backhand'), ('volley', 'volley|net play'), ('rally', 'rally|rallies|baseline|groundstroke'), ('spin', 'topspin|slice|spin'), ('footwork', 'footwork|split step|recovery'), ('practice', 'practice|drill|training|technique|swing|tennis form'), ('tactics', '\\b(?:strategy|strategies|tactics|tactical|positioning|pusher|pushers)\\b|how to (?:win|beat)\\b'), ('grip_review', '\\b(?:grips?|ready position|trophy position)\\b')]
 STOP={'how','to','a','an','the','in','on','for','of','and','with','best','tennis','is','what','at','your','my','do','i'}
 def classify(row,data):
  word=row['keyword']
@@ -116,9 +116,10 @@ def classify(row,data):
  editorial=topic(word)
  routed=route(word,row.get('evidence_url',''),'tennis')
  if routed['routing_state']=='out_of_scope':return None,'unrelated_search_intent'
+ if routed['routing_state']=='specialist_review':return None,'specialist_review'
  family=('record:'+record['id']) if record else ('equipment:'+profile['id']) if profile else ('editorial:'+editorial) if editorial else next((f for f,p in FAMILIES if re.search(p,word,re.I)),None)
  if not family:return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
- if not editorial and not profile and not record and EXCLUDE.search(word):return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
+ if not editorial and not profile and not record and (EXCLUDE.search(word) or (family=='grip_review' and re.search(r'\b(?:size|sizing|overgrip|replacement|tape|sweaty)\b',word,re.I))):return None,('needs_template' if routed['routing_state']=='content_candidate' else routed['routing_state'])
  if data.get('http')!=200:return None,'source_fetch_pending'
  if record:return (family,None) if record_grounded(record,data) else (None,'source_record_facts_changed')
  if profile:return (family,None) if grounded(profile,data) else (None,'source_equipment_facts_changed')

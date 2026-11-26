@@ -16,7 +16,7 @@ def route(keyword,url,sport):
         return result('out_of_scope','Explicit personal-life, gambling or non-product intent','out_of_scope')
     others=r'\b(basketball|football|soccer|baseball|pickleball|'+('golf' if sport=='tennis' else 'tennis')+r')\b'
     if has(others):return result('cross_sport_review','Cross-sport query needs human disambiguation','needs_review')
-    if has(r'\b(elbow|injury|injuries|pain|brace|rehab|treatment)\b'):
+    if has(r'\b(elbow|injury|injuries|pain|brace|rehab|treatment|fracture|fractured|surgery|surgical|fasciitis|hamate|arthritis|cancer)\b'):
         return result('health','Medical claims need specialist sources','specialist_review')
     if has(r'\b(live|scores|results|schedule|tickets|rankings|ranking|prediction|predictions)\b') or '/matches/' in path:
         return result('event_results','Requires dated event data and an update policy','freshness_required')

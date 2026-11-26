@@ -10,7 +10,7 @@ CLI='/var/lib/swi-codex/agent-relay/bin/vercel'
 PROJECT='prj_7RDDXImL9f7HgQtFmZ1TsPMG6CLC'
 SCOPE='diifans-projects'
 ORIGIN='https://acecut.goswie.com'
-PROXY='http://192.168.0.110:10808'
+PROXY=os.environ.get('ACECUT_SOURCE_PROXY','http://127.0.0.1:7890')
 def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def read(p,default=None):return json.loads(p.read_text()) if p.exists() else default
 
