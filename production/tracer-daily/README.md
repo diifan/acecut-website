@@ -87,3 +87,20 @@ collection and live batch publication remain separate acceptance requirements.
 
 
 2026-11-25 recovery: retry a READY deployment without rebuilding after a publication/verification error; revalidate all available/reserved source/template bindings before rendering; normalize exported HTTP source URLs to the same HTTPS host/path/query while preserving original CSV hashes and requiring successful evidence verification. Daily schedule prepares tomorrow only after today reaches its target.
+
+### Reviewed workflow evidence registry (2026-11-26)
+`reviewed_workflow_sources.select(HOME)` now reads `HOME/reviewed-workflow-sources.json`.
+Entries carry an ID, exact keyword aliases, a specific HTTPS guide URL, grounding terms,
+reviewer/date, and optionally the observed body SHA. It preserves the original demand
+CSV/hash/URL, runs ordinary classification, and uses the existing source/family intent key.
+Published, reserved and verified rows remain protected; duplicate aliases do not add inventory.
+No schema or threshold migration is performed. The current registry retains the previously
+verified official recording guide. Proposed registry entries are never automatically approved.
+
+`workflow_product_audit.py --home HOME` reads original metric archives and published state;
+it writes research reports only. Ambiguous record/recording terms use the original demand
+URL to distinguish sporting records from filming. Low-volume research does not satisfy the
+production >100 volume, KD<30 gate and can suggest improving an existing page instead.
+Tests: `python3 -m unittest test_workflow_registry`. Source implementation reviewed from the
+existing swi-claude conversation on 2026-11-26; production module names are local imports,
+not relay environment bindings. Isolated callers inject dependencies or match runtime HOME.
