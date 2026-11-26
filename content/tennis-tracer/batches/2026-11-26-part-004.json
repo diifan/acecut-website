@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-26",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 4,
+  "source_kind": "semrush_keywords",
+  "base_commit": "cf0a475e98000662c2e6b2611eb9efd596e7a4fa",
+  "pages": [
+    {
+      "keyword": "tennis camera",
+      "normalized": "tennis camera",
+      "url": "https://acecut.goswie.com/tennis-tracer/tennis-camera",
+      "evidence_url": "https://www.spintip.com/tennis-camera-app",
+      "demand_url": "https://swing.vision/guides/track-your-match",
+      "volume": 170.0,
+      "kd": 15.0,
+      "metric_timestamp": "2026-10-07",
+      "source_sha256": "79a34dea2537ea686779196c29addbca23110035a4e16dc8828bc471addebba4",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/swing.vision-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd0-30.csv",
+      "sha256": "45b4db5c7c85e9aac38fdbf7c2898945aa7f51ae36d9874a2992c1d8feef39e9",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/50602e0ccb4498b56993c26f9dd73d349d4307589516db2a7ecfdd2f2dd64047.json",
+      "evidence_sha256": "5036c27bb83cddcc87f42c92505a1779ba30f01815797d07b054ac5308de7b94"
+    }
+  ]
+}
