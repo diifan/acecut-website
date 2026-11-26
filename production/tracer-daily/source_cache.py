@@ -49,13 +49,15 @@ def public_url(url):
 class Redirect(urllib.request.HTTPRedirectHandler):
  def redirect_request(self,req,fp,code,msg,headers,newurl):return super().redirect_request(req,fp,code,msg,headers,public_url(newurl))
 _http=threading.local()
+_render_slots=threading.BoundedSemaphore(2)
+RENDER_HOSTS={'swing.vision','www.swing.vision','tenniscut.com','www.tenniscut.com','spintip.com','www.spintip.com','matchcutpro.com','www.matchcutpro.com','unforce.io','www.unforce.io'}
 
 def fetch(url,structured=False):
  path=HOME/'source-cache'/(hashlib.sha256(url.encode()).hexdigest()+'.json');old=read(path)
  if old and old.get('http')!=200 and old.get('checked_at') and not ('TypeError:' in old.get('error','') and old.get('parser_version')!=2):
   import datetime
   if (datetime.datetime.now(datetime.timezone.utc)-datetime.datetime.fromisoformat(old['checked_at'])).total_seconds()<1800:return path,old
- if old and old.get('http')==200 and (structured!='score' or 'match_score' in old) and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
+ if old and old.get('http')==200 and not (urllib.parse.urlsplit(url).hostname in RENDER_HOSTS and len(old.get('text',''))<300) and (structured!='score' or 'match_score' in old) and (not structured or (old.get('sections') and (structured not in ('tables','entity') or ('tables' in old and (structured!='entity' or 'player_fields' in old))))):return path,old
  host=urllib.parse.urlsplit(url).hostname or ''
  backoff_path=HOME/'source-host-backoff'/(hashlib.sha256(host.encode()).hexdigest()+'.json')
  backoff=read(backoff_path,{})
@@ -82,7 +84,14 @@ def fetch(url,structured=False):
       chunks.append(chunk)
      raw=b''.join(chunks);body=raw.decode('utf-8',errors='replace');final=current;http=response.status_code;break
    else:raise ValueError('Source redirect limit exceeded')
-   parser=Text();parser.feed(body)
+   parser=Text();parser.feed(body);representation='raw_html'
+   if host in RENDER_HOSTS and len(' '.join(parser.parts))<300:
+    with _render_slots:
+     rendered=subprocess.run(['node',str(Path(__file__).with_name('render_source.cjs')),url],capture_output=True,text=True,timeout=50,check=True)
+    result=json.loads(rendered.stdout);public_url(result['url'])
+    body=result['html'];raw=body.encode();final=result['url'];representation='rendered_dom'
+    parser=Text();parser.feed(body)
+    if len(' '.join(parser.parts))<300:raise ValueError('Rendered source has insufficient text')
    if parser.section_parts:parser.sections.append({'heading':parser.section_heading,'text':' '.join(parser.section_parts)[:16000]})
    player_fields={}
    if urllib.parse.urlsplit(url).hostname in ('www.tennisabstract.com','tennisabstract.com'):
@@ -95,7 +104,7 @@ def fetch(url,structured=False):
       except (ValueError,SyntaxError):pass
    from match_score import extract_score
    match_score=extract_score(body,url)
-   data=dict(match_score=match_score,source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
+   data=dict(representation=representation,match_score=match_score,source_url=url,final_url=final,http=http,title=' '.join(parser.titles),headings=parser.headings[:40],text=' '.join(parser.parts)[:60000],body_sha256=hashlib.sha256(raw).hexdigest(),checked_at=now(),sections=parser.sections[:100],tables=parser.tables[:40],player_fields=player_fields)
    break
   except Exception as e:
    data=dict(source_url=url,http=None,error=type(e).__name__+': '+str(e)[:200],checked_at=now())
@@ -150,7 +159,7 @@ def intent_key(row):
  return (family or 'unknown')+'|'+row['evidence_url']
 
 def verify(day):
- c=db();rows=[dict(r) for r in c.execute('select * from keywords where status in ("candidate","fetch_failed","needs_template","needs_review","freshness_required","specialist_review") or (status="excluded" and error in ("no_supported_tracer_workflow_intent","unrelated_search_intent"))')]
+ c=db();rows=[dict(r) for r in c.execute('select * from keywords where status in ("candidate","fetch_failed","needs_template","needs_review","freshness_required","specialist_review") or (status="excluded" and error in ("no_supported_tracer_workflow_intent","unrelated_search_intent","source_not_tennis_or_insufficient_text"))')]
  # Apply the existing keyword-only exclusions before spending source fetches.
  # This does not relax evidence gates for any potentially usable topic.
  wanted=[]

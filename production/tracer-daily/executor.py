@@ -37,6 +37,8 @@ def refresh(day):
  ensure_public_players()
  from supplemental_evidence import select as select_supplemental
  select_supplemental(HOME)
+ from reviewed_workflow_sources import select as select_workflows
+ select_workflows(HOME)
  receipt(day,state='validating_keyword_input',source_kind='semrush_keywords',keyword_sources=[dict(source='Semrush organic Positions',binding=read(HOME/'keyword-input.json'),import_counts=imported)],keyword_pool=counts(),blockers=[])
  verify(day);capacity()
 
