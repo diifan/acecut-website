@@ -1,5 +1,5 @@
 // Public, unauthenticated source rendering; no supplier browser or login reuse.
-const {chromium}=require('/tmp/wingman-site-qa/node_modules/playwright');
+const {chromium}=require('/var/lib/swi-codex/SEOAgent/runtime/source-browser/node_modules/playwright');
 const allowed=new Set(['swing.vision','www.swing.vision','tenniscut.com','www.tenniscut.com','spintip.com','www.spintip.com','matchcutpro.com','www.matchcutpro.com','unforce.io','www.unforce.io']);
 (async()=>{
  const target=new URL(process.argv[2]);if(target.protocol!=='https:'||!allowed.has(target.hostname)||target.username||target.password||target.port)throw Error('Unregistered rendering source');
