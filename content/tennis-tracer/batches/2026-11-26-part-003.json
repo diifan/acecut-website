@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-26",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 3,
+  "source_kind": "semrush_keywords",
+  "base_commit": "50dce98677db4a721f8101f61715f504ee2ae2f1",
+  "pages": [
+    {
+      "keyword": "tennis recording",
+      "normalized": "tennis recording",
+      "url": "https://acecut.goswie.com/tennis-tracer/tennis-recording",
+      "evidence_url": "https://swing.vision/guides/set-up-your-recording",
+      "demand_url": "https://swing.vision/guides/track-your-match",
+      "volume": 260.0,
+      "kd": 6.0,
+      "metric_timestamp": "2026-09-18",
+      "source_sha256": "79a34dea2537ea686779196c29addbca23110035a4e16dc8828bc471addebba4",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/swing.vision-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd0-30.csv",
+      "sha256": "47ae0230844290b0a997ddb55daa698c3f707d1cd8d9a10ebfd3b81b5fcd5306",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/7cf568fea18cb4b7ee9a91680d3ff9d09ddfd1d4a2c0a8eeca16d2cbd7de78b2.json",
+      "evidence_sha256": "aaf624ebb8b60af9301cc64fa9263cd32ba212e5f8e5a1532398bf020f2a817e"
+    }
+  ]
+}
