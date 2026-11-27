@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-27",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 2,
+  "source_kind": "semrush_keywords",
+  "base_commit": "6b603ac7f05a8322edcf557feeeefe4bf6a15bef",
+  "pages": [
+    {
+      "keyword": "j j wolf tennis",
+      "normalized": "j j wolf tennis",
+      "url": "https://acecut.goswie.com/tennis-tracer/j-j-wolf-tennis",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=200670/J-J-Wolf&f=ACareerqq&q=OliverCrawford",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=200670/J-J-Wolf&f=ACareerqq&q=OliverCrawford",
+      "volume": 110.0,
+      "kd": 27.0,
+      "metric_timestamp": "2026-11-08",
+      "source_sha256": "68b895d588dd5e6503e89b76b177a9460f729cae1d56d1000ba993e68f91557e",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd22-30.csv",
+      "sha256": "82bda906e3b7ad72556d82638d9452525995cc238702ef89337ee90631cd46d2",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/f3352a8123089bd258e76e12b0e76ab5643e265d1c01cfe511318d72fad8a806.json",
+      "evidence_sha256": "cd9cf89865f9e435355319f1bbe1bf44e08cd6b4872102cff6de862b560ee9f7"
+    }
+  ]
+}
