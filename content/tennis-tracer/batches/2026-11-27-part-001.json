@@ -1,0 +1,40 @@
+{
+  "day": "2026-11-27",
+  "target": 2,
+  "daily_target": 2000,
+  "sequence": 1,
+  "source_kind": "semrush_keywords",
+  "base_commit": "65baea876b4fe1faaceecaac629710d73fc9860e",
+  "pages": [
+    {
+      "keyword": "justin roberts tennis",
+      "normalized": "justin roberts tennis",
+      "url": "https://acecut.goswie.com/tennis-tracer/justin-roberts-tennis",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=JustinRoberts",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=JustinRoberts",
+      "volume": 880.0,
+      "kd": 21.0,
+      "metric_timestamp": "2026-10-10",
+      "source_sha256": "e42c5b41e55552fadae5c1e586cbc85db27b6f862f600f170d99255dbbc66f44",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "9005127afcbef71ca924c8af5d1786e646a4b38dc904a4d889c2ca40a927a36f",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/d8901145262ec22ed20cc061fedd86adad9d9092ba6920f0309364638dcc2c65.json",
+      "evidence_sha256": "f6926c92b7a90627a3e17ec7b89c493ef8a2e99cace01278703688b6c3b4161d"
+    },
+    {
+      "keyword": "aidan kim",
+      "normalized": "aidan kim",
+      "url": "https://acecut.goswie.com/tennis-tracer/aidan-kim",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210077/Aidan-Kim&f=ACareerqq&q=NickLagaev",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210077/Aidan-Kim&f=ACareerqq&q=NickLagaev",
+      "volume": 480.0,
+      "kd": 21.0,
+      "metric_timestamp": "2026-10-14",
+      "source_sha256": "e42c5b41e55552fadae5c1e586cbc85db27b6f862f600f170d99255dbbc66f44",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "4d6f24fef8e0721912bcfa5df790add83da0e2e593e447c88d5548c519edd567",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/512af723fdb9cde3da3e7e744863eb04d6b28751c2c6f8c8d60a408a694b2dde.json",
+      "evidence_sha256": "7ae50805aff662958b288e8f15e1273c45bfad65e95a2fe5c652e09b60d98c3d"
+    }
+  ]
+}
