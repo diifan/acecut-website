@@ -1,0 +1,40 @@
+{
+  "day": "2026-11-28",
+  "target": 2,
+  "daily_target": 2000,
+  "sequence": 2,
+  "source_kind": "semrush_keywords",
+  "base_commit": "18d0ca2ffa62270651cd9dcb7fe6284dc09af684",
+  "pages": [
+    {
+      "keyword": "yujin kim",
+      "normalized": "yujin kim",
+      "url": "https://acecut.goswie.com/tennis-tracer/yujin-kim",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=YujinKim",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=YujinKim",
+      "volume": 1300.0,
+      "kd": 26.0,
+      "metric_timestamp": "2026-09-14",
+      "source_sha256": "68b895d588dd5e6503e89b76b177a9460f729cae1d56d1000ba993e68f91557e",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd22-30.csv",
+      "sha256": "fcf97a3a7bc7e882ac6977629dc1ab64b8d8921094002073e32e423900b5c1bd",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/60a522b8635b93e6ac26d7407cb965bd9f2c6d96d2224d0167c4fa5b4c7ac3fb.json",
+      "evidence_sha256": "b1cfde30e8c846838ffd0918eba9b200ead7ab1bd8bbc167f3252dc72cf2ecc9"
+    },
+    {
+      "keyword": "schwartzman diego sebastian",
+      "normalized": "schwartzman diego sebastian",
+      "url": "https://acecut.goswie.com/tennis-tracer/schwartzman-diego-sebastian",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=DiegoSebastianSchwartzman",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=DiegoSebastianSchwartzman",
+      "volume": 1300.0,
+      "kd": 22.0,
+      "metric_timestamp": "2026-09-27",
+      "source_sha256": "68b895d588dd5e6503e89b76b177a9460f729cae1d56d1000ba993e68f91557e",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd22-30.csv",
+      "sha256": "ef84fae6166c0d08a73f3622c6ed693fc4f6dea5504bac87ade09d3dd9dc0540",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/5784cfdf8bd5daf67eb7d909b32ca9c10a0ffe9029398eedd30c350ea97851e5.json",
+      "evidence_sha256": "e6ca419a6afc9696466db835c8e068a557297a8a18208a3cba0f65ff4340eed8"
+    }
+  ]
+}
