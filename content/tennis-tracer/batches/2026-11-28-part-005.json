@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-28",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 5,
+  "source_kind": "semrush_keywords",
+  "base_commit": "85e32fca615e1340def63b711c6fe26fb44da18d",
+  "pages": [
+    {
+      "keyword": "carlos alvarez tennis",
+      "normalized": "carlos alvarez tennis",
+      "url": "https://acecut.goswie.com/tennis-tracer/carlos-alvarez-tennis",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=210545/Luis-Carlos-Alvarez",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=210545/Luis-Carlos-Alvarez",
+      "volume": 720.0,
+      "kd": 27.0,
+      "metric_timestamp": "2026-10-18",
+      "source_sha256": "68b895d588dd5e6503e89b76b177a9460f729cae1d56d1000ba993e68f91557e",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd22-30.csv",
+      "sha256": "f3a91781502131af86e8d2486f785b8130396fec281b5cbbe93087dcdb2d1f36",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/99941e83d33960fd484b5896dd3fce3746d3f8c647f43f8ccbba48f488b48cc2.json",
+      "evidence_sha256": "93d741909f8e8dd0915cfcba927d4882386a0b5481b446f2f9d3f90bc3f60a32"
+    }
+  ]
+}
