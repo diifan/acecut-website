@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-28",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 1,
+  "source_kind": "semrush_keywords",
+  "base_commit": "e8748abfc0da2ce80bda259425e6710f7be336a0",
+  "pages": [
+    {
+      "keyword": "jay dylan hara friend",
+      "normalized": "jay dylan hara friend",
+      "url": "https://acecut.goswie.com/tennis-tracer/jay-dylan-hara-friend",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=210221/Jay-Dylan-Hara-Friend&f=ACareerqq&q=MicheleRibecai",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player.cgi?p=210221/Jay-Dylan-Hara-Friend&f=ACareerqq&q=MicheleRibecai",
+      "volume": 1300.0,
+      "kd": 11.0,
+      "metric_timestamp": "2026-10-05",
+      "source_sha256": "2192dde26bee71c926768dc784240e2eb10ceae8b1ae8bba2f7497417e6390e4",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd0-15.csv",
+      "sha256": "2c33ad6e015f7260aebfb235fd34b5043e82437058dcbb236ac8eea28287bdeb",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/66273ff10d55a1f6b1402f0a52b84b8cc912e7c9483e5888dab1e2a44e50cc96.json",
+      "evidence_sha256": "7dad711fb62fea8e62d87f7322b41c67dc016b4878bd66949f32e643e10308b7"
+    }
+  ]
+}
