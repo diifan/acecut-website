@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-28",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 6,
+  "source_kind": "semrush_keywords",
+  "base_commit": "ab4d822a6e078786bbea5fceb406c4613b59d20d",
+  "pages": [
+    {
+      "keyword": "anca alexia todoni",
+      "normalized": "anca alexia todoni",
+      "url": "https://acecut.goswie.com/tennis-tracer/anca-alexia-todoni",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=AncaAlexiaTodoni",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/wplayer.cgi?p=AncaAlexiaTodoni",
+      "volume": 880.0,
+      "kd": 24.0,
+      "metric_timestamp": "2026-09-15",
+      "source_sha256": "68b895d588dd5e6503e89b76b177a9460f729cae1d56d1000ba993e68f91557e",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd22-30.csv",
+      "sha256": "1bad0a356cc449dd43ffe2d8106c5ba690519bda782b20924b470881d3f3272a",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/0536070b35c46eb27be474910c330f4492accacfabcb415514d71ed9f8f96e51.json",
+      "evidence_sha256": "08c1edcd5f2775957e5e1c0c5448dacd237022c64936d4323bc1f0e6d8a88e11"
+    }
+  ]
+}
