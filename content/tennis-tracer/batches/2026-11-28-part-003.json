@@ -1,0 +1,40 @@
+{
+  "day": "2026-11-28",
+  "target": 2,
+  "daily_target": 2000,
+  "sequence": 3,
+  "source_kind": "semrush_keywords",
+  "base_commit": "a168e1c1352d141ffeb6ef4df342ed34799d3f08",
+  "pages": [
+    {
+      "keyword": "patrick brady tennis",
+      "normalized": "patrick brady tennis",
+      "url": "https://acecut.goswie.com/tennis-tracer/patrick-brady-tennis",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=211394/Patrick-Brady&f=ACareerqq&q=JesseDelaney",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=211394/Patrick-Brady&f=ACareerqq&q=JesseDelaney",
+      "volume": 1000.0,
+      "kd": 12.0,
+      "metric_timestamp": "2026-09-25",
+      "source_sha256": "2192dde26bee71c926768dc784240e2eb10ceae8b1ae8bba2f7497417e6390e4",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd0-15.csv",
+      "sha256": "b32f687dc37976df491cc115ef735ae5c43003313b9d8d51d9428ca4f15f5a48",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/0cbe6a2483615daabcf8c0d31c3440cf82bf26c96da22f4a662f0bfd95069794.json",
+      "evidence_sha256": "74c0ffd0ce2b64b0061b7a5f5f8d8cf71b58cbb4afcb7bebf345581dedd87865"
+    },
+    {
+      "keyword": "reda bennani tennis",
+      "normalized": "reda bennani tennis",
+      "url": "https://acecut.goswie.com/tennis-tracer/reda-bennani-tennis",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210730/Reda-Bennani&f=ACareerqq&q=HugoSoares",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210730/Reda-Bennani&f=ACareerqq&q=HugoSoares",
+      "volume": 110.0,
+      "kd": 18.0,
+      "metric_timestamp": "2026-11-06",
+      "source_sha256": "e42c5b41e55552fadae5c1e586cbc85db27b6f862f600f170d99255dbbc66f44",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "aab96c144424934f7e5de825546ffb2aa486c08c121977e5d9b3f4a04f223109",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/52c45fe215826b8495bb2344f94790ac73e25d8a13febf4e316c8735c57892dd.json",
+      "evidence_sha256": "e230503474ffc6a85eb1b99b2b5443984125483aedee731035387db97c8e1830"
+    }
+  ]
+}
