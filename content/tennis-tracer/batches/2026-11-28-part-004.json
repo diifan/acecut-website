@@ -1,0 +1,25 @@
+{
+  "day": "2026-11-28",
+  "target": 1,
+  "daily_target": 2000,
+  "sequence": 4,
+  "source_kind": "semrush_keywords",
+  "base_commit": "75ea68e104c4e8c5b1fd5795916279ad06303fed",
+  "pages": [
+    {
+      "keyword": "pavlos tsitsipas",
+      "normalized": "pavlos tsitsipas",
+      "url": "https://acecut.goswie.com/tennis-tracer/pavlos-tsitsipas",
+      "evidence_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210409/Pavlos-Tsitsipas&f=ACareerqq&q=BenjaminTorrealba",
+      "demand_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?p=210409/Pavlos-Tsitsipas&f=ACareerqq&q=BenjaminTorrealba",
+      "volume": 880.0,
+      "kd": 21.0,
+      "metric_timestamp": "2026-11-13",
+      "source_sha256": "e42c5b41e55552fadae5c1e586cbc85db27b6f862f600f170d99255dbbc66f44",
+      "source_path": "/data/swi-algo/Swi-App-Factory/Acecut/production/keyword-expansion/runs/20261124T074245Z/exports/tennisabstract.com-organic.Positions-us-20261123-2026-11-24T07_42_44Z-kd15-22.csv",
+      "sha256": "85eb932bace8591683483d8d63f591d00d8083475195fabac416175f414a0160",
+      "evidence_path": "/data/swi-algo/Swi-IP-Config/swie-app-mac/data/tracer-daily-acecut/source-cache/48440b1c31bcab1bbca45aa64703c4aa70f7039496389a235f274b015379d108.json",
+      "evidence_sha256": "cabb4892431ef9b3042010cdaef79d570f1dfccb9b410f06122eeb16b0f537c8"
+    }
+  ]
+}
